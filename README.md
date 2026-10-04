@@ -23,37 +23,67 @@ docs/                    openapi.json, Postman-коллекция
 
 ## Локальный запуск
 
-Нужны Docker с Compose v2 и make.
+Всё выполняется в контейнерах: локальные PHP, Composer и PostgreSQL не нужны.
+
+**Требования**
+
+- Docker с Compose v2 (`docker compose version`) и make.
+- Свободные порты 8080, 8081, 8082 и 5432 (меняются в `.env`, см. ниже).
+
+**Первый запуск** (порядок важен: зависимости ставятся до старта приложений, потому что код монтируется в контейнеры вместе с `vendor`)
 
 ```
-make init      # создаст .env, поменяйте пароли и секреты
-make up        # соберёт образы и поднимет стек
-make install   # composer install для core и обоих приложений
+make init      # создаст .env из .env.example
+make install   # composer install для core и обоих приложений (по composer.lock)
+make up        # соберёт образы и поднимет стек в режиме разработки
 ```
 
-`make install` создаёт `composer.lock` в `packages/core`, `apps/native` и `apps/symfony`. Закоммитьте их, чтобы bench-сборка была воспроизводимой.
+`make init` не перезаписывает существующий `.env`. Значения по умолчанию (`change_me`) подходят для локальной работы;
+для чего-то большего поменяйте `POSTGRES_PASSWORD`, `AUTH_TOKEN_SECRET` и `SYMFONY_APP_SECRET`. `AUTH_TOKEN_SECRET` не может быть пустым:
+приложения откажутся выдавать токены.
 
-Проверка native: `curl -i http://localhost:8081/user/get/99999999-9999-4999-8999-999999999999`, ожидаемый ответ: 404 с JSON `{"message": ...}`.
-Полный сценарий (регистрация, логин, получение анкеты) описан в разделе «Проверка API».
+**Проверка, что всё работает**
 
-Проверка Symfony: `make console c=about`, затем `curl -i http://localhost:8082/`.
-Для неизвестного пути ожидаемый ответ: 404 с JSON `{"message": ...}`, как у native.
+```
+make ps                                                   # postgres должен быть healthy, остальные Up
+curl -i http://localhost:8081/user/get/99999999-9999-4999-8999-999999999999   # native
+curl -i http://localhost:8082/user/get/99999999-9999-4999-8999-999999999999   # symfony
+make test-core test-native test-symfony                  # тесты
+```
 
-Консоль Symfony запускайте от `www-data` (`make console c="debug:router"` или `docker compose exec -u www-data php-symfony php bin/console ...`).
-Команда без `-u www-data` выполняется от root и создаёт в `/var/www/symfony-var` файлы, которые php-fpm потом не сможет перезаписать (ошибка 500 «Permission denied»).
-Если это уже случилось: `docker compose exec php-symfony chown -R www-data:www-data /var/www/symfony-var`.
+Ожидаемый ответ на каждый `curl`: `404` с JSON `{"message": "User ... was not found."}`. Это значит, что приложение и БД работают.
+Полный сценарий (регистрация, логин, получение анкеты) описан в разделе «Проверка API», а UI для ручной проверки открывается на http://localhost:8080.
+
+**Остановка и сброс**
+
+```
+make down                     # остановить стек (данные БД сохраняются)
+make reset-db && make up      # удалить данные БД и применить миграции заново
+```
+
+Список всех команд: `make help`.
 
 Порты по умолчанию:
 
-| Сервис     | Адрес                 |
-|------------|-----------------------|
-| native     | http://localhost:8081 |
-| symfony    | http://localhost:8082 |
-| frontend   | http://localhost:8080 |
-| PostgreSQL | localhost:5432        |
+| Сервис     | Адрес                 | Переменная в `.env` |
+|------------|-----------------------|---------------------|
+| native     | http://localhost:8081 | `NATIVE_PORT`       |
+| symfony    | http://localhost:8082 | `SYMFONY_PORT`      |
+| frontend   | http://localhost:8080 | `FRONTEND_PORT`     |
+| PostgreSQL | localhost:5432        | `POSTGRES_PORT`     |
 
-Схема БД из `db/migrations` применяется автоматически при первом старте на пустом томе.
-Чтобы применить заново: `make reset-db && make up`.
+Схема БД из `db/migrations` применяется автоматически только при первом старте на пустом томе.
+
+**Если что-то не работает**
+
+- Порт занят (`port is already allocated`): поменяйте нужный порт в `.env` и выполните `make up`.
+- 500 от приложения сразу после клонирования: не выполнен `make install` (нет `vendor`). Выполните его и повторите запрос.
+- Symfony: консоль запускайте от `www-data` (`make console c="debug:router"` или `docker compose exec -u www-data php-symfony php bin/console ...`).
+  Команда без `-u www-data` выполняется от root и создаёт в `/var/www/symfony-var` файлы, которые php-fpm потом не сможет перезаписать (ошибка 500 «Permission denied»).
+  Если это уже случилось: `docker compose exec php-symfony chown -R www-data:www-data /var/www/symfony-var`.
+- Нужно изменить схему БД или начать с чистого состояния: `make reset-db && make up`.
+
+Режимы dev и bench, а также нагрузочные замеры описаны ниже в разделах «Режимы» и «Нагрузочные замеры и ёмкость».
 
 ## Тесты
 
