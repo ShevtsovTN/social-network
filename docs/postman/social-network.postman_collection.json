@@ -1,0 +1,634 @@
+{
+  "info": {
+    "_postman_id": "7f2d9b2a-6a8b-4c93-8b1a-4b7b9e2e2a31",
+    "name": "Social Network API",
+    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user. Login и Get user используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции).\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8081", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "password", "value": "", "type": "string" },
+    { "key": "firstName", "value": "", "type": "string" },
+    { "key": "lastName", "value": "", "type": "string" },
+    { "key": "birthDate", "value": "", "type": "string" },
+    { "key": "gender", "value": "", "type": "string" },
+    { "key": "city", "value": "", "type": "string" },
+    { "key": "interests", "value": "", "type": "string" },
+    { "key": "token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Register",
+      "item": [
+        {
+          "name": "Register - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('returns generated uuid', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+                  "    pm.collectionVariables.set('userId', body.id);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('password', 's3cret-password');",
+                  "pm.collectionVariables.set('firstName', 'Ivan');",
+                  "pm.collectionVariables.set('lastName', 'Petrov');",
+                  "pm.collectionVariables.set('birthDate', '1990-05-17');",
+                  "pm.collectionVariables.set('gender', 'male');",
+                  "pm.collectionVariables.set('city', 'Moscow');",
+                  "pm.collectionVariables.set('interests', JSON.stringify(['hiking', 'chess']));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"male\",\n  \"interests\": [\"hiking\", \"chess\"],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - empty firstName",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is firstName', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('firstName');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"male\",\n  \"interests\": [],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - blank lastName",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is lastName', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('lastName');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"   \",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"male\",\n  \"interests\": [],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - malformed birthDate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is birthDate', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('birthDate');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-02-30\",\n  \"gender\": \"male\",\n  \"interests\": [],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - birthDate in the future",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is birthDate', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('birthDate');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"2999-01-01\",\n  \"gender\": \"male\",\n  \"interests\": [],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - invalid gender",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is gender', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('gender');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"robot\",\n  \"interests\": [],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - too many interests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is interests', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('interests');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"male\",\n  \"interests\": [\"i1\",\"i2\",\"i3\",\"i4\",\"i5\",\"i6\",\"i7\",\"i8\",\"i9\",\"i10\",\"i11\",\"i12\",\"i13\",\"i14\",\"i15\",\"i16\",\"i17\",\"i18\",\"i19\",\"i20\",\"i21\"],\n  \"city\": \"Moscow\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - empty city",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is city', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('city');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"male\",\n  \"interests\": [],\n  \"city\": \"\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - password too short",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is password', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('password');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ivan\",\n  \"lastName\": \"Petrov\",\n  \"birthDate\": \"1990-05-17\",\n  \"gender\": \"male\",\n  \"interests\": [],\n  \"city\": \"Moscow\",\n  \"password\": \"short\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "Login - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('returns a non-empty token', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.collectionVariables.set('token', body.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('error has no field', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body).to.not.have.property('field');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"password\": \"wrong-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - unknown user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('error has no field', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body).to.not.have.property('field');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"99999999-9999-4999-8999-999999999999\",\n  \"password\": \"whatever-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - malformed userId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401, not 400', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('error has no field', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body).to.not.have.property('field');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"not-a-uuid\",\n  \"password\": \"whatever-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Get user",
+      "item": [
+        {
+          "name": "Get user - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('profile matches what was registered', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.id).to.eql(pm.collectionVariables.get('userId'));",
+                  "    pm.expect(body.firstName).to.eql(pm.collectionVariables.get('firstName'));",
+                  "    pm.expect(body.lastName).to.eql(pm.collectionVariables.get('lastName'));",
+                  "    pm.expect(body.birthDate).to.eql(pm.collectionVariables.get('birthDate'));",
+                  "    pm.expect(body.gender).to.eql(pm.collectionVariables.get('gender'));",
+                  "    pm.expect(body.interests).to.eql(JSON.parse(pm.collectionVariables.get('interests')));",
+                  "    pm.expect(body.city).to.eql(pm.collectionVariables.get('city'));",
+                  "});",
+                  "",
+                  "pm.test('password is never exposed', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.not.have.property('password');",
+                  "    pm.expect(body).to.not.have.property('passwordHash');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/get/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "get", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get user - invalid id format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('id');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/get/not-a-uuid",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "get", "not-a-uuid"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get user - not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('error has no field', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body).to.not.have.property('field');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/get/99999999-9999-4999-8999-999999999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "get", "99999999-9999-4999-8999-999999999999"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

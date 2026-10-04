@@ -1,0 +1,57 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  # --- Infrastructure ---
+  PDO:
+    class: PDO
+    factory: ['SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoConnectionFactory', 'create']
+    arguments:
+      - '%env(DB_HOST)%'
+      - '%env(DB_PORT)%'
+      - '%env(DB_NAME)%'
+      - '%env(DB_USER)%'
+      - '%env(DB_PASSWORD)%'
+
+  SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoUserRepository: ~
+  SocialNetwork\Core\Application\Port\UserRepository:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoUserRepository
+
+  SocialNetwork\SymfonyApp\Infrastructure\Security\Argon2PasswordHasher: ~
+  SocialNetwork\Core\Application\Port\PasswordHasher:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Security\Argon2PasswordHasher
+
+  SocialNetwork\SymfonyApp\Infrastructure\Security\HmacTokenService:
+    arguments:
+      $secret: '%env(AUTH_TOKEN_SECRET)%'
+  SocialNetwork\Core\Application\Port\TokenIssuer:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Security\HmacTokenService
+  SocialNetwork\Core\Application\Port\TokenVerifier:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Security\HmacTokenService
+
+  SocialNetwork\SymfonyApp\Infrastructure\Security\RandomUserIdGenerator: ~
+  SocialNetwork\Core\Application\Port\UserIdGenerator:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Security\RandomUserIdGenerator
+
+  SocialNetwork\SymfonyApp\Infrastructure\SystemClock: ~
+  SocialNetwork\Core\Application\Port\Clock:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\SystemClock
+
+  # --- Application (core) ---
+  SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler: ~
+  SocialNetwork\Core\Application\RegisterUser\RegisterUser:
+    alias: SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler
+  SocialNetwork\Core\Application\Login\LoginHandler: ~
+  SocialNetwork\Core\Application\Login\Login:
+    alias: SocialNetwork\Core\Application\Login\LoginHandler
+  SocialNetwork\Core\Application\GetUser\GetUserHandler: ~
+  SocialNetwork\Core\Application\GetUser\GetUser:
+    alias: SocialNetwork\Core\Application\GetUser\GetUserHandler
+
+  # --- Presentation ---
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\RegisterUserController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\LoginController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetUserController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Error\ApiExceptionListener: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Routing\StrictRoutingListener: ~

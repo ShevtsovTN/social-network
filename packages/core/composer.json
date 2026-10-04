@@ -1,0 +1,25 @@
+{
+    "name": "social-network/core",
+    "description": "Бизнес-логика социальной сети: Domain и Application. Без инфраструктуры.",
+    "type": "library",
+    "require": {
+        "php": "^8.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SocialNetwork\\Core\\": "src/",
+            "SocialNetwork\\CoreContract\\": "tests/Contract/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SocialNetwork\\Core\\Tests\\Unit\\": "tests/Unit/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

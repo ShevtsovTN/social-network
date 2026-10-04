@@ -1,0 +1,221 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Social Network API",
+    "version": "1.0.0",
+    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично."
+  },
+  "paths": {
+    "/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Войти и получить токен доступа",
+        "description": "Любая причина отказа (невалидный userId, пользователь не найден, неверный пароль) возвращает одну и ту же ошибку 401, чтобы не раскрывать, какие id существуют.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успешный вход",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Неверный userId или пароль",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/register": {
+      "post": {
+        "operationId": "registerUser",
+        "summary": "Зарегистрировать нового пользователя",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пользователь создан",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegisterResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Данные не прошли валидацию. field — имя поля в терминах домена (firstName, lastName, birthDate, gender, interests, city, password).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/get/{id}": {
+      "get": {
+        "operationId": "getUser",
+        "summary": "Получить анкету пользователя по id",
+        "description": "Публичный эндпоинт, авторизация не требуется.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/UserId" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Анкета пользователя",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "400": {
+            "description": "id не является валидным UUID (field = \"id\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID, регистр не важен (сравнение после lower-casing).",
+        "example": "11111111-1111-4111-8111-111111111111"
+      },
+      "Gender": {
+        "type": "string",
+        "enum": ["male", "female", "other"]
+      },
+      "BirthDate": {
+        "type": "string",
+        "format": "date",
+        "description": "YYYY-MM-DD, не раньше 1900-01-01 и не позже текущей даты.",
+        "example": "1990-05-17"
+      },
+      "Interests": {
+        "type": "array",
+        "description": "Без пустых значений и дубликатов (без учёта регистра); порядок первого упоминания сохраняется.",
+        "items": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "maxItems": 20,
+        "example": ["hiking", "chess"]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["firstName", "lastName", "birthDate", "gender", "interests", "city", "password"],
+        "properties": {
+          "firstName": { "type": "string", "minLength": 1, "maxLength": 100, "example": "Ivan" },
+          "lastName": { "type": "string", "minLength": 1, "maxLength": 100, "example": "Petrov" },
+          "birthDate": { "$ref": "#/components/schemas/BirthDate" },
+          "gender": { "$ref": "#/components/schemas/Gender" },
+          "interests": { "$ref": "#/components/schemas/Interests" },
+          "city": { "type": "string", "minLength": 1, "maxLength": 100, "example": "Moscow" },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 8,
+            "maxLength": 128,
+            "writeOnly": true,
+            "description": "Политика сложности применяется только при регистрации."
+          }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/UserId" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["userId", "password"],
+        "properties": {
+          "userId": { "$ref": "#/components/schemas/UserId" },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 1,
+            "maxLength": 128,
+            "writeOnly": true
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Формат токена определяет реализация приложения.",
+            "example": "v1.11111111-1111-4111-8111-111111111111.9f8c7b..."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "Анкета пользователя. Хеш пароля никогда не возвращается.",
+        "required": ["id", "firstName", "lastName", "birthDate", "gender", "interests", "city"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/UserId" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "birthDate": { "$ref": "#/components/schemas/BirthDate" },
+          "gender": { "$ref": "#/components/schemas/Gender" },
+          "interests": { "$ref": "#/components/schemas/Interests" },
+          "city": { "type": "string" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string", "example": "firstName must not be empty." },
+          "field": {
+            "type": "string",
+            "description": "Присутствует только при ошибках валидации (400). Имя поля в терминах домена.",
+            "example": "firstName"
+          }
+        }
+      }
+    }
+  }
+}

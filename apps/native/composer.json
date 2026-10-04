@@ -1,0 +1,34 @@
+{
+    "name": "social-network/native",
+    "description": "Социальная сеть на чистом PHP: Infrastructure и Presentation поверх core.",
+    "type": "project",
+    "require": {
+        "php": "^8.4",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "social-network/core": "@dev"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../packages/core"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SocialNetwork\\NativeApp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SocialNetwork\\NativeApp\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    }
+}

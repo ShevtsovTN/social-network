@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.idea
+.vscode
+.claude
+docs
+db
+**/vendor
+**/.phpunit.cache
+apps/symfony/var

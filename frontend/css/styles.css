@@ -1,0 +1,170 @@
+:root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --text: #1d2330;
+    --muted: #667085;
+    --border: #d5d9e2;
+    --accent: #2f5bea;
+    --accent-text: #ffffff;
+    --danger: #b42318;
+    --danger-bg: #fef3f2;
+    --ok-bg: #ecfdf3;
+    --ok: #067647;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #14171f;
+        --surface: #1d222d;
+        --text: #e6e9f0;
+        --muted: #98a2b3;
+        --border: #343b4a;
+        --accent: #6b8cff;
+        --accent-text: #0d1220;
+        --danger: #fda29b;
+        --danger-bg: #3a1c1a;
+        --ok-bg: #12301f;
+        --ok: #75e0a7;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding-inline: 1rem;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body > * { max-width: 40rem; margin-inline: auto; }
+
+[hidden] { display: none !important; }
+
+.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block: 1rem 0.5rem;
+}
+
+.brand { margin: 0; font-size: 1.25rem; }
+
+.backend { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.9rem; }
+
+.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); }
+
+.tabs a {
+    padding: 0.5rem 0.9rem;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+
+.tabs a[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); }
+
+.session-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+main { padding-block: 1rem 3rem; }
+
+.card {
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.card h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+
+.form { display: grid; gap: 0.9rem; }
+.form h2 { margin-bottom: 0; }
+
+.field { display: grid; gap: 0.25rem; }
+.field-label { font-size: 0.9rem; color: var(--muted); }
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
+
+.field-error, .summary {
+    padding: 0.5rem 0.7rem;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.field-error .detail, .summary .detail { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.8rem; }
+
+button, .button {
+    display: inline-block;
+    padding: 0.6rem 1.1rem;
+    font: inherit;
+    color: var(--accent-text);
+    background: var(--accent);
+    border: 0;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+button:disabled { opacity: 0.6; cursor: wait; }
+
+.button.secondary, button.secondary {
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border);
+}
+
+.session-bar button, .session-bar a { padding: 0.2rem 0.6rem; font-size: 0.85rem; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+
+.user-id {
+    display: block;
+    padding: 0.5rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: 0.95rem ui-monospace, monospace;
+    overflow-wrap: anywhere;
+    user-select: all;
+}
+
+.lookup { display: flex; flex-wrap: wrap; align-items: end; gap: 0.5rem; }
+.lookup .field { flex: 1 1 14rem; }
+
+.profile { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0; }
+.profile dt { color: var(--muted); }
+.profile dd { margin: 0; overflow-wrap: anywhere; }
+.profile ul { margin: 0; padding-left: 1.1rem; }
+
+.muted { color: var(--muted); }

@@ -1,0 +1,37 @@
+{
+    "name": "social-network/symfony",
+    "description": "Социальная сеть на Symfony: Infrastructure и Presentation поверх core.",
+    "type": "project",
+    "require": {
+        "php": "^8.4",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "social-network/core": "@dev",
+        "symfony/console": "^8.1",
+        "symfony/framework-bundle": "^8.1",
+        "symfony/yaml": "^8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../packages/core"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SocialNetwork\\SymfonyApp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SocialNetwork\\SymfonyApp\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    }
+}
