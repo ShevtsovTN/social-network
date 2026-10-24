@@ -9,7 +9,7 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, фабрика PDO-подключения.
 - `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
 - `src/Presentation/Http/`: `Application` (вход слоя: Request → JsonResponse) и подкаталоги по ответственности:
-  `Request/` (запрос, JSON-тело, `MalformedRequest`), `Response/` (`JsonResponse`),
+  `Request/` (запрос, JSON-тело, параметры строки запроса, `MalformedRequest`), `Response/` (`JsonResponse`, `UserPayload`),
   `Routing/` (роутер, маршрут, `RouteNotFound`, `MethodNotAllowed`), `Controller/` (интерфейс и контроллеры),
   `Error/` (обработчик ошибок).
 

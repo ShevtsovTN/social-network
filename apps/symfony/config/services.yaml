@@ -48,10 +48,14 @@ services:
   SocialNetwork\Core\Application\GetUser\GetUserHandler: ~
   SocialNetwork\Core\Application\GetUser\GetUser:
     alias: SocialNetwork\Core\Application\GetUser\GetUserHandler
+  SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler: ~
+  SocialNetwork\Core\Application\SearchUsers\SearchUsers:
+    alias: SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler
 
   # --- Presentation ---
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\RegisterUserController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\LoginController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetUserController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\SearchUsersController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Error\ApiExceptionListener: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Routing\StrictRoutingListener: ~

@@ -9,7 +9,7 @@ use JsonException;
 final readonly class JsonResponse
 {
     /**
-     * @param array<string, mixed> $body
+     * @param array<array-key, mixed> $body объект или список (например, результат поиска)
      */
     public function __construct(
         public int $status,

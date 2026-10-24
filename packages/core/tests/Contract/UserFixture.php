@@ -25,12 +25,16 @@ final class UserFixture
     {
     }
 
-    public static function create(string $id = self::DEFAULT_ID, ?Interests $interests = null): User
-    {
+    public static function create(
+        string $id = self::DEFAULT_ID,
+        ?Interests $interests = null,
+        string $firstName = 'Иван',
+        string $lastName = 'Petrov',
+    ): User {
         return User::reconstitute(
             UserId::fromString($id),
-            Name::fromString('Иван', 'firstName'),
-            Name::fromString('Petrov', 'lastName'),
+            Name::fromString($firstName, 'firstName'),
+            Name::fromString($lastName, 'lastName'),
             BirthDate::fromString('1990-05-17'),
             Gender::Male,
             $interests ?? Interests::fromList(['hiking', 'chess', 'Кофе, чай; "кавычки"']),

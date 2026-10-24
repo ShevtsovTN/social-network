@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SocialNetwork\Core\Domain\User\City;
 use SocialNetwork\Core\Domain\User\Gender;
 use SocialNetwork\Core\Domain\User\Name;
+use SocialNetwork\Core\Domain\User\NamePrefix;
 use SocialNetwork\Core\Domain\User\PasswordHash;
 use SocialNetwork\Core\Domain\User\UserId;
 use SocialNetwork\Core\Tests\Unit\Support\AssertsInvalidUserData;
@@ -29,6 +30,21 @@ final class ValueObjectsTest extends TestCase
     {
         $this->assertInvalidField('firstName', static fn () => Name::fromString("Ivan\nPetrov", 'firstName'));
         $this->assertInvalidField('firstName', static fn () => Name::fromString("\xC3\x28", 'firstName'));
+    }
+
+    public function testNamePrefixIsTrimmedAndKeepsWildcardsAsIs(): void
+    {
+        self::assertSame('Ив', NamePrefix::fromString(' Ив ', 'firstName')->value);
+        self::assertSame('%_\\', NamePrefix::fromString('%_\\', 'lastName')->value);
+        self::assertSame(100, mb_strlen(NamePrefix::fromString(str_repeat('я', 100), 'firstName')->value));
+    }
+
+    public function testNamePrefixRejectsEmptyLongAndBrokenValues(): void
+    {
+        $this->assertInvalidField('firstName', static fn () => NamePrefix::fromString('  ', 'firstName'));
+        $this->assertInvalidField('lastName', static fn () => NamePrefix::fromString(str_repeat('я', 101), 'lastName'));
+        $this->assertInvalidField('lastName', static fn () => NamePrefix::fromString("Ив\tан", 'lastName'));
+        $this->assertInvalidField('firstName', static fn () => NamePrefix::fromString("\xC3\x28", 'firstName'));
     }
 
     public function testCityIsRequired(): void

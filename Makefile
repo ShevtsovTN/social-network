@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed bench-search-queries bench-search bench-plot
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -56,6 +56,16 @@ bench-down: ## Остановить стек замеров
 
 bench-get: ## Замер GET /user/get/{id} в обоих приложениях (после make bench-up): make bench-get CONCURRENCY=32 DURATION=15
 	./social-network-docker/bench/get.sh
+
+bench-search-queries: ## Сгенерировать набор префиксов для замера поиска (search-queries.csv, нужна заполненная БД)
+	./social-network-docker/bench/search-queries.sh
+
+bench-search: ## Замер GET /user/search через k6 (после make bench-up и make seed): make bench-search PHASE=before|after
+	PHASE=$(PHASE) ./social-network-docker/bench/search.sh
+
+bench-plot: ## Графики и таблицы по итогам bench-search в docs/homework-indexes/
+	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
+	docker run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/docs/homework-indexes":/report social-network-bench-plot /report
 
 compare: ## Сверка ответов native и symfony на одинаковых запросах (стек должен быть поднят)
 	docker run --rm --network host -v "$(CURDIR)/social-network-docker/compare":/compare:ro php:8.4.26-cli \

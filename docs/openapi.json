@@ -3,7 +3,7 @@
   "info": {
     "title": "Social Network API",
     "version": "1.0.0",
-    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично."
+    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id, поиск анкет по префиксу имени и фамилии. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично."
   },
   "paths": {
     "/login": {
@@ -103,6 +103,50 @@
           },
           "404": {
             "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/search": {
+      "get": {
+        "operationId": "searchUsers",
+        "summary": "Поиск анкет по префиксу имени и фамилии",
+        "description": "Публичный эндпоинт, авторизация не требуется. Возвращает анкеты, у которых имя начинается с first_name и одновременно фамилия начинается с last_name. Сравнение регистрозависимое, символы % и _ ищутся буквально. Результат отсортирован по id, без пагинации; нет совпадений — пустой массив.",
+        "parameters": [
+          {
+            "name": "first_name",
+            "in": "query",
+            "required": true,
+            "description": "Префикс имени",
+            "schema": { "type": "string", "minLength": 1, "maxLength": 100, "example": "Конст" }
+          },
+          {
+            "name": "last_name",
+            "in": "query",
+            "required": true,
+            "description": "Префикс фамилии",
+            "schema": { "type": "string", "minLength": 1, "maxLength": 100, "example": "Оси" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Найденные анкеты, отсортированные по id (возможно, пустой список)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Параметр отсутствует, пустой после trim, длиннее 100 символов, не UTF-8 или содержит управляющие символы (field = \"firstName\" для first_name, \"lastName\" для last_name)",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" }

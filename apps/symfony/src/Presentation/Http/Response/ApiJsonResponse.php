@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 final class ApiJsonResponse extends JsonResponse
 {
     /**
-     * @param array<string, mixed> $body
+     * @param array<array-key, mixed> $body объект или список (например, результат поиска)
      */
     public function __construct(int $status, array $body)
     {

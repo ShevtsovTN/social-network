@@ -238,6 +238,37 @@ $add('get: PUT not allowed', 'PUT', '/user/get/{userId}', '{}');
 $add('get: DELETE not allowed', 'DELETE', '/user/get/{userId}');
 $add('get: OPTIONS', 'OPTIONS', '/user/get/{userId}');
 
+// --- поиск ---
+// Префиксы из сгенерированных анкет (make seed), а не Ivan/Petrov: пользователи, которых регистрирует
+// сама сверка, маскируются по-разному для native и symfony и дали бы ложное расхождение.
+$search = static fn (string $query): string => '/user/search?' . $query;
+$searchBy = static fn (string $firstName, string $lastName): string => $search(http_build_query(['first_name' => $firstName, 'last_name' => $lastName]));
+$add('search: success', 'GET', $searchBy('Конст', 'Оси'));
+$add('search: whole names', 'GET', $searchBy('Константин', 'Осипов'));
+$add('search: many results', 'GET', $searchBy('Ив', 'Ив'));
+$add('search: no matches', 'GET', $searchBy('Конст', 'Zzz'));
+$add('search: trimming', 'GET', $searchBy(' Конст ', ' Оси '));
+$add('search: case sensitive', 'GET', $searchBy('конст', 'оси'));
+$add('search: percent is literal', 'GET', $searchBy('%', '%'));
+$add('search: underscore is literal', 'GET', $searchBy('К_нст', 'О_и'));
+$add('search: backslash is literal', 'GET', $searchBy('\\', '\\'));
+$add('search: SQL metacharacters', 'GET', $searchBy("' OR 1=1 --", "'; DROP TABLE users; --"));
+$add('search: first_name 100 chars', 'GET', $searchBy($longString(100), 'Оси'));
+$add('search: first_name 101 chars', 'GET', $searchBy($longString(101), 'Оси'));
+$add('search: empty first_name', 'GET', $searchBy('', 'Оси'));
+$add('search: blank last_name', 'GET', $searchBy('Конст', '   '));
+$add('search: control character', 'GET', $search('first_name=%D0%9A%0A%D0%BE&last_name=%D0%9E'));
+$add('search: invalid UTF-8', 'GET', $search('first_name=%C3%28&last_name=%D0%9E'));
+$add('search: missing first_name', 'GET', $search('last_name=%D0%9E'));
+$add('search: missing last_name', 'GET', $search('first_name=%D0%9A'));
+$add('search: no parameters', 'GET', '/user/search');
+$add('search: array parameter', 'GET', $search('first_name[]=a&last_name=b'));
+$add('search: duplicate parameter', 'GET', $search('first_name=Zzz&first_name=%D0%9A%D0%BE%D0%BD%D1%81%D1%82&last_name=%D0%9E%D1%81%D0%B8'));
+$add('search: camelCase parameters', 'GET', $search('firstName=a&lastName=b'));
+$add('search: trailing slash', 'GET', '/user/search/?first_name=a&last_name=b');
+$add('search: HEAD', 'HEAD', $searchBy('Конст', 'Оси'));
+$add('search: POST not allowed', 'POST', '/user/search', '{}');
+
 // --- маршруты и методы ---
 $add('routes: GET /', 'GET', '/');
 $add('routes: GET /unknown', 'GET', '/unknown');

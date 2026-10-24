@@ -8,6 +8,7 @@ use SocialNetwork\Core\Application\GetUser\GetUser;
 use SocialNetwork\Core\Application\GetUser\GetUserQuery;
 use SocialNetwork\NativeApp\Presentation\Http\Request\Request;
 use SocialNetwork\NativeApp\Presentation\Http\Response\JsonResponse;
+use SocialNetwork\NativeApp\Presentation\Http\Response\UserPayload;
 
 final readonly class GetUserController implements Controller
 {
@@ -19,14 +20,6 @@ final readonly class GetUserController implements Controller
     {
         $user = $this->getUser->handle(new GetUserQuery($routeParameters['id']));
 
-        return new JsonResponse(200, [
-            'id' => $user->id->value,
-            'firstName' => $user->firstName->value,
-            'lastName' => $user->lastName->value,
-            'birthDate' => $user->birthDate->toString(),
-            'gender' => $user->gender->value,
-            'interests' => $user->interests->values,
-            'city' => $user->city->value,
-        ]);
+        return new JsonResponse(200, UserPayload::fromUser($user));
     }
 }

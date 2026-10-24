@@ -7,7 +7,8 @@
   (`UserRepository`, `PasswordHasher`, `TokenIssuer`, `TokenVerifier`, `UserIdGenerator`, `Clock`).
   Зависит только от Domain.
 - Use cases: `RegisterUser` (возвращает `UserId`), `Login` (возвращает токен, при любой
-  неудаче `InvalidCredentials`), `GetUser` (возвращает `User`, иначе `UserNotFound`).
+  неудаче `InvalidCredentials`), `GetUser` (возвращает `User`, иначе `UserNotFound`),
+  `SearchUsers` (список `User` по префиксам имени и фамилии, отсортирован по id; префикс — `NamePrefix`).
 - Ошибки данных: `Domain\User\InvalidUserData` с полем `field` в терминах домена
   (`firstName`, `birthDate`, ...). Сопоставление с полями запроса и HTTP-статусами делают приложения.
 - Реализаций портов в `core` нет. Их пишут приложения.
@@ -20,7 +21,7 @@
 - Исключения домена не знают про HTTP-коды.
 
 ## Правила
-- Один use case = один интерфейс (`RegisterUser`, `Login`, `GetUser`) и один handler, который его реализует,
+- Один use case = один интерфейс (`RegisterUser`, `Login`, `GetUser`, `SearchUsers`) и один handler, который его реализует,
   с одним публичным методом. Контракт ошибок (`@throws`) описывается на интерфейсе.
   Presentation приложений зависит от интерфейса, а не от handler'а.
 - Входные данные use case приходят готовыми DTO, а не массивами.

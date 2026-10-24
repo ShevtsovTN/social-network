@@ -10,8 +10,8 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `config/`: `bundles.php`, `services.yaml`, `routes.yaml` (атрибуты из `Presentation/Http`), `packages/`.
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, фабрика PDO-подключения.
 - `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
-- `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `MalformedRequest`),
-  `Response/` (`ApiJsonResponse`), `Routing/` (`StrictRoutingListener`), `Error/` (`ApiExceptionListener`).
+- `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `QueryParameters`, `MalformedRequest`),
+  `Response/` (`ApiJsonResponse`, `UserPayload`), `Routing/` (`StrictRoutingListener`), `Error/` (`ApiExceptionListener`).
 
 ## Правила
 - Минимальный набор компонентов: http-kernel, routing, dependency-injection

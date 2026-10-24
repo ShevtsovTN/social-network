@@ -12,6 +12,7 @@ use SocialNetwork\Core\Domain\User\City;
 use SocialNetwork\Core\Domain\User\Gender;
 use SocialNetwork\Core\Domain\User\Interests;
 use SocialNetwork\Core\Domain\User\Name;
+use SocialNetwork\Core\Domain\User\NamePrefix;
 use SocialNetwork\Core\Domain\User\PasswordHash;
 use SocialNetwork\Core\Domain\User\User;
 use SocialNetwork\Core\Domain\User\UserId;
@@ -56,10 +57,41 @@ final readonly class PdoUserRepository implements UserRepository
         $statement->execute(['id' => $id->value]);
         $row = $statement->fetch();
 
-        if ($row === false) {
-            return null;
-        }
+        return $row === false ? null : self::userFromRow($row);
+    }
 
+    public function searchByNamePrefix(NamePrefix $firstName, NamePrefix $lastName): array
+    {
+        $statement = $this->connection->prepare(
+            "SELECT id, first_name, last_name, birth_date, gender, interests, city, password_hash
+             FROM users
+             WHERE first_name LIKE :first_name ESCAPE '\\' AND last_name LIKE :last_name ESCAPE '\\'
+             ORDER BY id",
+        );
+        $statement->execute([
+            'first_name' => self::likePrefixPattern($firstName),
+            'last_name' => self::likePrefixPattern($lastName),
+        ]);
+
+        return array_map(self::userFromRow(...), $statement->fetchAll());
+    }
+
+    /**
+     * Префикс ищется буквально: спецсимволы LIKE (%, _ и сам символ экранирования) экранируются,
+     * в конец добавляется %.
+     */
+    private static function likePrefixPattern(NamePrefix $prefix): string
+    {
+        return strtr($prefix->value, ['\\' => '\\\\', '%' => '\\%', '_' => '\\_']) . '%';
+    }
+
+    /**
+     * @param array<string, string> $row
+     *
+     * @throws JsonException
+     */
+    private static function userFromRow(array $row): User
+    {
         return User::reconstitute(
             UserId::fromString($row['id']),
             Name::fromString($row['first_name'], 'firstName'),

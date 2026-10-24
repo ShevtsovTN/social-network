@@ -7,6 +7,7 @@ namespace SocialNetwork\SymfonyApp\Presentation\Http\Controller;
 use SocialNetwork\Core\Application\GetUser\GetUser;
 use SocialNetwork\Core\Application\GetUser\GetUserQuery;
 use SocialNetwork\SymfonyApp\Presentation\Http\Response\ApiJsonResponse;
+use SocialNetwork\SymfonyApp\Presentation\Http\Response\UserPayload;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -22,14 +23,6 @@ final readonly class GetUserController
     {
         $user = $this->getUser->handle(new GetUserQuery($id));
 
-        return new ApiJsonResponse(200, [
-            'id' => $user->id->value,
-            'firstName' => $user->firstName->value,
-            'lastName' => $user->lastName->value,
-            'birthDate' => $user->birthDate->toString(),
-            'gender' => $user->gender->value,
-            'interests' => $user->interests->values,
-            'city' => $user->city->value,
-        ]);
+        return new ApiJsonResponse(200, UserPayload::fromUser($user));
     }
 }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 use SocialNetwork\Core\Application\GetUser\GetUserHandler;
 use SocialNetwork\Core\Application\Login\LoginHandler;
 use SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler;
+use SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoConnectionFactory;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoUserRepository;
 use SocialNetwork\NativeApp\Infrastructure\Security\Argon2PasswordHasher;
@@ -21,6 +22,7 @@ use SocialNetwork\NativeApp\Presentation\Http\Application;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\GetUserController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\LoginController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\RegisterUserController;
+use SocialNetwork\NativeApp\Presentation\Http\Controller\SearchUsersController;
 use SocialNetwork\NativeApp\Presentation\Http\Error\ErrorHandler;
 use SocialNetwork\NativeApp\Presentation\Http\Routing\Route;
 use SocialNetwork\NativeApp\Presentation\Http\Routing\Router;
@@ -77,6 +79,9 @@ $router = new Router([
     )),
     new Route('GET', '/user/get/{id}', static fn (): GetUserController => new GetUserController(
         new GetUserHandler($users()),
+    )),
+    new Route('GET', '/user/search', static fn (): SearchUsersController => new SearchUsersController(
+        new SearchUsersHandler($users()),
     )),
 ]);
 
