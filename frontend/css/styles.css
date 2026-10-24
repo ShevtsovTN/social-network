@@ -138,6 +138,9 @@ button, .button {
 
 button:disabled { opacity: 0.6; cursor: wait; }
 
+.results { margin: 0; padding-left: 1.5rem; display: grid; gap: 0.3rem; }
+.results a { color: var(--accent); }
+
 .button.secondary, button.secondary {
     color: var(--text);
     background: transparent;

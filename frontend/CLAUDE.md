@@ -1,17 +1,17 @@
 # frontend: клиент для проверки API
 
 ## Роль
-Простой UI поверх HTTP-контракта из `docs/openapi.json`: регистрация, вход, анкета по id.
+Простой UI поверх HTTP-контракта из `docs/openapi.json`: регистрация, вход, анкета по id, поиск анкет.
 Переключатель backend'а (native / Symfony) нужен, чтобы вручную убедиться, что оба приложения
 дают идентичный контракт. Бизнес-логики здесь нет, валидация на сервере.
 
 ## Состав
 - `index.html`, `css/styles.css`: страница и стили (светлая и тёмная темы).
-- `js/main.js`: hash-роутер (`#/register`, `#/login`, `#/user/<id>`), выбор backend'а, панель сессии.
+- `js/main.js`: hash-роутер (`#/register`, `#/login`, `#/user/<id>`, `#/search?first_name=…&last_name=…`), выбор backend'а, панель сессии.
 - `js/api.js`: клиент контракта и `ApiError` (`status`, `message`, `field`).
 - `js/session.js`: backend в `localStorage`, сессия (`userId`, токен) в `sessionStorage` и в памяти.
 - `js/form.js`: поля формы, тексты ошибок по `field`, обработка отправки.
-- `js/views/`: экраны регистрации, входа и анкеты.
+- `js/views/`: экраны регистрации, входа, анкеты и поиска.
 - `js/dom.js`: `el()`, создание элементов без `innerHTML`.
 
 ## Правила

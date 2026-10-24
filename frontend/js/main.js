@@ -4,8 +4,9 @@ import { BACKENDS, clearSession, getBackend, getSession, setBackend } from './se
 import { renderLogin } from './views/login.js';
 import { renderProfile } from './views/profile.js';
 import { renderRegister } from './views/register.js';
+import { renderSearch } from './views/search.js';
 
-const views = { register: renderRegister, login: renderLogin, user: renderProfile };
+const views = { register: renderRegister, login: renderLogin, user: renderProfile, search: renderSearch };
 
 const app = document.getElementById('app');
 const sessionBar = document.getElementById('session-bar');

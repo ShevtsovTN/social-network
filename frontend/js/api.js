@@ -54,5 +54,7 @@ export function createApi(getBackend) {
         /** @returns {Promise<{token: string}>} */
         login: (userId, password) => request('POST', '/login', { userId, password }),
         getUser: (id) => request('GET', `/user/get/${encodeURIComponent(id)}`),
+        /** @returns {Promise<Array<object>>} анкеты, отсортированные по id */
+        searchUsers: (firstName, lastName) => request('GET', `/user/search?${new URLSearchParams({ first_name: firstName, last_name: lastName })}`),
     };
 }

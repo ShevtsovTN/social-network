@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7f2d9b2a-6a8b-4c93-8b1a-4b7b9e2e2a31",
     "name": "Social Network API",
-    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user. Login и Get user используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции).\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
+    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты, поиск анкет. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user → Search users. Login, Get user и Search users используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции).\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -624,6 +624,359 @@
               "raw": "{{baseUrl}}/user/get/99999999-9999-4999-8999-999999999999",
               "host": ["{{baseUrl}}"],
               "path": ["user", "get", "99999999-9999-4999-8999-999999999999"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search users",
+      "item": [
+        {
+          "name": "Search - finds registered user by prefixes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('returns a list of profiles sorted by id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    const ids = body.map((user) => user.id);",
+                  "    pm.expect(ids).to.eql([...ids].sort());",
+                  "});",
+                  "",
+                  "pm.test('every profile matches both prefixes', function () {",
+                  "    pm.response.json().forEach((user) => {",
+                  "        pm.expect(user.firstName.startsWith('Iva')).to.be.true;",
+                  "        pm.expect(user.lastName.startsWith('Pet')).to.be.true;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('password is never exposed', function () {",
+                  "    pm.response.json().forEach((user) => {",
+                  "        pm.expect(user).to.not.have.property('password');",
+                  "        pm.expect(user).to.not.have.property('passwordHash');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('contains the registered user', function () {",
+                  "    const ids = pm.response.json().map((user) => user.id);",
+                  "    pm.expect(ids).to.include(pm.collectionVariables.get('userId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name=Iva&last_name=Pet",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "Iva"
+                },
+                {
+                  "key": "last_name",
+                  "value": "Pet"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search - whole names as prefixes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('returns a list of profiles sorted by id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    const ids = body.map((user) => user.id);",
+                  "    pm.expect(ids).to.eql([...ids].sort());",
+                  "});",
+                  "",
+                  "pm.test('every profile matches both prefixes', function () {",
+                  "    pm.response.json().forEach((user) => {",
+                  "        pm.expect(user.firstName.startsWith(pm.collectionVariables.get('firstName'))).to.be.true;",
+                  "        pm.expect(user.lastName.startsWith(pm.collectionVariables.get('lastName'))).to.be.true;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('password is never exposed', function () {",
+                  "    pm.response.json().forEach((user) => {",
+                  "        pm.expect(user).to.not.have.property('password');",
+                  "        pm.expect(user).to.not.have.property('passwordHash');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('contains the registered user', function () {",
+                  "    const ids = pm.response.json().map((user) => user.id);",
+                  "    pm.expect(ids).to.include(pm.collectionVariables.get('userId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name={{firstName}}&last_name={{lastName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "{{firstName}}"
+                },
+                {
+                  "key": "last_name",
+                  "value": "{{lastName}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search - case sensitive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('returns a list of profiles sorted by id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    const ids = body.map((user) => user.id);",
+                  "    pm.expect(ids).to.eql([...ids].sort());",
+                  "});",
+                  "",
+                  "pm.test('every profile matches both prefixes', function () {",
+                  "    pm.response.json().forEach((user) => {",
+                  "        pm.expect(user.firstName.startsWith('iva')).to.be.true;",
+                  "        pm.expect(user.lastName.startsWith('pet')).to.be.true;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('password is never exposed', function () {",
+                  "    pm.response.json().forEach((user) => {",
+                  "        pm.expect(user).to.not.have.property('password');",
+                  "        pm.expect(user).to.not.have.property('passwordHash');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('does not contain the registered user', function () {",
+                  "    const ids = pm.response.json().map((user) => user.id);",
+                  "    pm.expect(ids).to.not.include(pm.collectionVariables.get('userId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name=iva&last_name=pet",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "iva"
+                },
+                {
+                  "key": "last_name",
+                  "value": "pet"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search - percent is not a wildcard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('nothing matches a literal %', function () {",
+                  "    pm.expect(pm.response.json()).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name=%25&last_name=%25",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "%25"
+                },
+                {
+                  "key": "last_name",
+                  "value": "%25"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search - missing last_name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is lastName', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('lastName');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name=Iva",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "Iva"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search - blank first_name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is firstName', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('firstName');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name=%20%20&last_name=Pet",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "%20%20"
+                },
+                {
+                  "key": "last_name",
+                  "value": "Pet"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search - first_name too long",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('field is firstName', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.field).to.eql('firstName');",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/search?first_name=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&last_name=Pet",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "search"],
+              "query": [
+                {
+                  "key": "first_name",
+                  "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "key": "last_name",
+                  "value": "Pet"
+                }
+              ]
             }
           },
           "response": []
