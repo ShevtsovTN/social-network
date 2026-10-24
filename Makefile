@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -60,6 +60,9 @@ bench-get: ## Замер GET /user/get/{id} в обоих приложениях
 compare: ## Сверка ответов native и symfony на одинаковых запросах (стек должен быть поднят)
 	docker run --rm --network host -v "$(CURDIR)/social-network-docker/compare":/compare:ro php:8.4.26-cli \
 		php /compare/compare.php http://127.0.0.1:$${NATIVE_PORT:-8081} http://127.0.0.1:$${SYMFONY_PORT:-8082}
+
+seed: ## Заполнить пустую таблицу users миллионом анкет из db/seed/people.v2.csv (стек должен быть поднят)
+	./db/seed/seed.sh
 
 reset-db: ## Остановить стек и удалить данные БД (миграции применятся заново при следующем up)
 	$(COMPOSE) down -v
