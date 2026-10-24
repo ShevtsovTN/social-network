@@ -141,17 +141,19 @@ def plot_comparison(data: dict, output: Path) -> None:
 
 
 def write_table(phase: str, apps: dict, output: Path) -> None:
-    lines = [
-        f"| Приложение | Конкурентность | Запросов | Успешных RPS | Ошибок | p50, мс | p95, мс | p99, мс | max, мс |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    header = ["Приложение", "Конкурентность", "Запросов", "Успешных RPS", "Ошибок", "p50, мс", "p95, мс", "p99, мс", "max, мс"]
+    rows = [
+        [app, str(vus), str(point["requests"]), f"{point['rps']:.1f}", f"{point['failed'] * 100:.2f}%",
+         f"{point['p50']:.1f}", f"{point['p95']:.1f}", f"{point['p99']:.1f}", f"{point['max']:.1f}"]
+        for app in APPS
+        for vus, point in sorted(apps.get(app, {}).items())
     ]
-    for app in APPS:
-        for vus, point in sorted(apps.get(app, {}).items()):
-            lines.append(
-                f"| {app} | {vus} | {point['requests']} | {point['rps']:.1f} | {point['failed'] * 100:.2f}% "
-                f"| {point['p50']:.1f} | {point['p95']:.1f} | {point['p99']:.1f} | {point['max']:.1f} |"
-            )
-    output.write_text("\n".join(lines) + "\n")
+    widths = [max(len(row[column]) for row in [header, *rows]) for column in range(len(header))]
+    # Первая колонка выровнена влево, числа вправо: таблица читается и как markdown, и как текст.
+    cell = lambda value, column: value.ljust(widths[column]) if column == 0 else value.rjust(widths[column])
+    line = lambda row: "| " + " | ".join(cell(value, column) for column, value in enumerate(row)) + " |"
+    separator = "|" + "|".join("-" * (width + 2) if column == 0 else "-" * (width + 1) + ":" for column, width in enumerate(widths)) + "|"
+    output.write_text("\n".join([line(header), separator, *map(line, rows)]) + "\n")
 
 
 def main() -> None:
