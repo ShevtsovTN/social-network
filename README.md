@@ -246,6 +246,7 @@ make bench-plot                     # графики и таблицы в docs/h
 - Итоги k6 в JSON: `docs/homework-indexes/results/<phase>/<app>-c<N>.json`. Графики строит `matplotlib` в одноразовом образе
   (`social-network-docker/bench/plot/`).
 - `make compare` и регистрации добавляют пользователей сверх миллиона; перед замером проверьте `SELECT count(*) FROM users`.
+- Отчёт с результатами до и после индекса: [`docs/homework-indexes/README.md`](docs/homework-indexes/README.md).
 
 ## Отладка (Xdebug)
 
@@ -263,3 +264,4 @@ Xdebug есть только в dev-образе и по умолчанию вы
 
 - `openapi.json`: спецификация из задания (источник истины для контракта).
 - `postman/social-network.postman_collection.json`: Postman-коллекция.
+- `homework-indexes/`: отчёт ДЗ «Производительность индексов» (`README.md`), графики, итоги k6 и EXPLAIN.

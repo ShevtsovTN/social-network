@@ -1,0 +1,72 @@
+-- Типичный запрос (27 строк)
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=143.36..143.41 rows=22 width=171) (actual time=0.103..0.104 rows=27 loops=1)
+   Sort Key: id
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=33
+   ->  Bitmap Heap Scan on users  (cost=56.44..142.87 rows=22 width=171) (actual time=0.048..0.078 rows=27 loops=1)
+         Filter: (((first_name)::text ~~ 'Кон%'::text) AND ((last_name)::text ~~ 'Оси%'::text))
+         Heap Blocks: exact=23
+         Buffers: shared hit=30
+         ->  Bitmap Index Scan on users_last_name_first_name_prefix_idx  (cost=0.00..56.43 rows=22 width=0) (actual time=0.036..0.036 rows=27 loops=1)
+               Index Cond: (((last_name)::text ~>=~ 'Оси'::text) AND ((last_name)::text ~<~ 'Осй'::text) AND ((first_name)::text ~>=~ 'Кон'::text) AND ((first_name)::text ~<~ 'Коо'::text))
+               Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=198
+ Planning Time: 0.628 ms
+ Execution Time: 0.140 ms
+(15 rows)
+
+-- Самая большая выдача из набора нагрузки (1388 строк)
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4793.15..4796.44 rows=1315 width=171) (actual time=1.657..1.700 rows=1388 loops=1)
+   Sort Key: id
+   Sort Method: quicksort  Memory: 314kB
+   Buffers: shared hit=566
+   ->  Bitmap Heap Scan on users  (cost=431.75..4725.03 rows=1315 width=171) (actual time=0.228..1.159 rows=1388 loops=1)
+         Filter: (((first_name)::text ~~ 'Але%'::text) AND ((last_name)::text ~~ 'Ива%'::text))
+         Heap Blocks: exact=541
+         Buffers: shared hit=566
+         ->  Bitmap Index Scan on users_last_name_first_name_prefix_idx  (cost=0.00..431.42 rows=1310 width=0) (actual time=0.131..0.131 rows=1388 loops=1)
+               Index Cond: (((last_name)::text ~>=~ 'Ива'::text) AND ((last_name)::text ~<~ 'Ивб'::text) AND ((first_name)::text ~>=~ 'Але'::text) AND ((first_name)::text ~<~ 'Алж'::text))
+               Buffers: shared hit=25
+ Planning Time: 0.090 ms
+ Execution Time: 1.784 ms
+(13 rows)
+
+-- Нет совпадений
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=8.47..8.47 rows=1 width=171) (actual time=0.018..0.018 rows=0 loops=1)
+   Sort Key: id
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3
+   ->  Index Scan using users_last_name_first_name_prefix_idx on users  (cost=0.42..8.46 rows=1 width=171) (actual time=0.009..0.009 rows=0 loops=1)
+         Index Cond: (((last_name)::text ~>=~ 'Zzz'::text) AND ((last_name)::text ~<~ 'Zz{'::text) AND ((first_name)::text ~>=~ 'Zzz'::text) AND ((first_name)::text ~<~ 'Zz{'::text))
+         Filter: (((first_name)::text ~~ 'Zzz%'::text) AND ((last_name)::text ~~ 'Zzz%'::text))
+         Buffers: shared hit=3
+ Planning Time: 0.108 ms
+ Execution Time: 0.035 ms
+(10 rows)
+
+-- Как выполняет приложение: prepared statement с параметрами (PDO, ATTR_EMULATE_PREPARES=false)
+PREPARE
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=143.36..143.41 rows=22 width=171) (actual time=0.041..0.042 rows=27 loops=1)
+   Sort Key: id
+   Sort Method: quicksort  Memory: 30kB
+   Buffers: shared hit=30
+   ->  Bitmap Heap Scan on users  (cost=56.44..142.87 rows=22 width=171) (actual time=0.021..0.032 rows=27 loops=1)
+         Filter: (((first_name)::text ~~ 'Кон%'::text) AND ((last_name)::text ~~ 'Оси%'::text))
+         Heap Blocks: exact=23
+         Buffers: shared hit=30
+         ->  Bitmap Index Scan on users_last_name_first_name_prefix_idx  (cost=0.00..56.43 rows=22 width=0) (actual time=0.017..0.017 rows=27 loops=1)
+               Index Cond: (((last_name)::text ~>=~ 'Оси'::text) AND ((last_name)::text ~<~ 'Осй'::text) AND ((first_name)::text ~>=~ 'Кон'::text) AND ((first_name)::text ~<~ 'Коо'::text))
+               Buffers: shared hit=7
+ Planning Time: 0.096 ms
+ Execution Time: 0.066 ms
+(13 rows)
+
