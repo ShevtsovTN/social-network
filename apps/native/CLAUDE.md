@@ -6,7 +6,8 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 ## Состав
 - `public/index.php`: единственная точка входа.
 - `config/`: composition root, ручная сборка зависимостей (без autowiring).
-- `src/Infrastructure/Persistence/`: `PdoUserRepository`, фабрика PDO-подключения.
+- `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
+  при промахе), фабрика PDO-подключения.
 - `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
 - `src/Presentation/Http/`: `Application` (вход слоя: Request → JsonResponse) и подкаталоги по ответственности:
   `Request/` (запрос, JSON-тело, параметры строки запроса, `MalformedRequest`), `Response/` (`JsonResponse`, `UserPayload`),
@@ -16,6 +17,11 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 ## Правила
 - Никаких фреймворков и микрофреймворков. Мелкие библиотеки только по согласованию.
 - Infrastructure реализует порты из `core` и не содержит бизнес-правил.
+- Маршрутизация чтения и записи (ДЗ «Репликация»), решение принимается в composition root (`config/container.php`), не в репозитории:
+  два PDO (`DB_HOST` primary, `DB_READ_HOST` реплики через haproxy) и два экземпляра `PdoUserRepository`.
+  `register` и `login` работают с primary, `search` читает реплики, `get` читает реплики через `PrimaryFallbackUserRepository`
+  (свежесозданная анкета может ещё не дойти до реплики). Общего подключения и алиаса `UserRepository` по умолчанию нет:
+  новый use case обязан выбрать явно. Подход одинаков в `native` и `symfony`.
 - Только prepared statements с именованными параметрами, без ORM.
 - Параметры argon2id и алгоритм токенов идентичны Symfony-версии.
 - Контейнер собирается вручную в одном месте.

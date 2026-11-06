@@ -4,7 +4,10 @@ services:
     autoconfigure: true
 
   # --- Infrastructure ---
-  PDO:
+  # Два подключения к БД: primary (запись) и реплики через haproxy (чтение). Общего алиаса PDO и UserRepository
+  # нет намеренно: каждый use case ниже явно выбирает, с чем работать (register и login с primary:
+  # логин идёт сразу после регистрации и не должен упереться в лаг реплики; get и search читают с реплик).
+  pdo.primary:
     class: PDO
     factory: ['SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoConnectionFactory', 'create']
     arguments:
@@ -14,9 +17,33 @@ services:
       - '%env(DB_USER)%'
       - '%env(DB_PASSWORD)%'
 
-  SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoUserRepository: ~
-  SocialNetwork\Core\Application\Port\UserRepository:
-    alias: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoUserRepository
+  pdo.replica:
+    class: PDO
+    factory: ['SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoConnectionFactory', 'create']
+    arguments:
+      - '%env(DB_READ_HOST)%'
+      - '%env(DB_READ_PORT)%'
+      - '%env(DB_NAME)%'
+      - '%env(DB_USER)%'
+      - '%env(DB_PASSWORD)%'
+
+  repository.user.primary:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoUserRepository
+    arguments:
+      $connection: '@pdo.primary'
+
+  repository.user.replica:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoUserRepository
+    arguments:
+      $connection: '@pdo.replica'
+
+  # get: чтение с реплики, при промахе перечитывает primary (свежесозданная анкета может ещё не дойти до реплики).
+  # Primary передаётся через service_closure: соединение открывается только при промахе.
+  repository.user.replica_with_primary_fallback:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PrimaryFallbackUserRepository
+    arguments:
+      $replica: '@repository.user.replica'
+      $primary: !service_closure '@repository.user.primary'
 
   SocialNetwork\SymfonyApp\Infrastructure\Security\Argon2PasswordHasher: ~
   SocialNetwork\Core\Application\Port\PasswordHasher:
@@ -39,16 +66,24 @@ services:
     alias: SocialNetwork\SymfonyApp\Infrastructure\SystemClock
 
   # --- Application (core) ---
-  SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler: ~
+  SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler:
+    arguments:
+      $users: '@repository.user.primary'
   SocialNetwork\Core\Application\RegisterUser\RegisterUser:
     alias: SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler
-  SocialNetwork\Core\Application\Login\LoginHandler: ~
+  SocialNetwork\Core\Application\Login\LoginHandler:
+    arguments:
+      $users: '@repository.user.primary'
   SocialNetwork\Core\Application\Login\Login:
     alias: SocialNetwork\Core\Application\Login\LoginHandler
-  SocialNetwork\Core\Application\GetUser\GetUserHandler: ~
+  SocialNetwork\Core\Application\GetUser\GetUserHandler:
+    arguments:
+      $users: '@repository.user.replica_with_primary_fallback'
   SocialNetwork\Core\Application\GetUser\GetUser:
     alias: SocialNetwork\Core\Application\GetUser\GetUserHandler
-  SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler: ~
+  SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler:
+    arguments:
+      $users: '@repository.user.replica'
   SocialNetwork\Core\Application\SearchUsers\SearchUsers:
     alias: SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler
 

@@ -12,8 +12,12 @@ x-php-app: &php-app
     dockerfile: social-network-docker/php/Dockerfile
     target: ${PHP_BUILD_TARGET:-dev}
   environment: &php-env
-    DB_HOST: postgres
+    # Запись и логин: primary. При failover DB_PRIMARY_HOST указывает на новый мастер.
+    DB_HOST: ${DB_PRIMARY_HOST:-postgres}
     DB_PORT: "5432"
+    # Чтение (get и search): реплики через haproxy.
+    DB_READ_HOST: haproxy
+    DB_READ_PORT: "5432"
     DB_NAME: ${POSTGRES_DB}
     DB_USER: ${POSTGRES_USER}
     DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -21,6 +25,8 @@ x-php-app: &php-app
   depends_on:
     postgres:
       condition: service_healthy
+    haproxy:
+      condition: service_started
   # Одинаковые лимиты для обоих приложений: честное нагрузочное сравнение.
   deploy:
     resources:
@@ -111,6 +117,27 @@ services:
       - ./social-network-docker/postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
     ports:
       - "${POSTGRES_REPLICA_2_PORT:-5434}:5432"
+
+  # Балансировщик чтения: раскладывает соединения приложений по двум репликам.
+  haproxy:
+    image: haproxy:3.0.11-alpine
+    volumes:
+      - ./social-network-docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      # Статистика: http://localhost:8404/stats
+      - "${HAPROXY_STATS_PORT:-8404}:8404"
+    depends_on:
+      postgres-replica-1:
+        condition: service_healthy
+      postgres-replica-2:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 128M
+    networks:
+      - backend
 
   # --- Приложение на чистом PHP ---
   php-native:

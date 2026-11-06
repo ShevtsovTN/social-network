@@ -12,6 +12,7 @@
 - `apps/symfony`: Symfony. Свои Infrastructure и Presentation, своя конфигурация DI.
 - `frontend/`: статический UI (HTML + ES-модули, без сборки) для ручной проверки API.
   Ходит в оба приложения через `nginx-frontend` (dev-only), контракт не меняет.
+- Подключения к БД: запись и логин идут на primary (`DB_HOST`), `get` и `search` на реплики через HAProxy (`DB_READ_HOST`).
 - `social-network-docker/`: Dockerfile'ы и конфиги php-fpm, nginx, postgres.
   `docker-compose.yaml` и `.env` лежат в корне репозитория.
 - `db/migrations/`: общая SQL-схема для обоих приложений.
