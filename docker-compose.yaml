@@ -47,6 +47,13 @@ services:
       - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+    # Лимиты одинаковы у всех узлов PostgreSQL (primary и standby), см. CLAUDE.md.
+    # Значения подбираются по baseline: БД должна быть узким местом, иначе реплики прироста не покажут.
+    deploy:
+      resources:
+        limits:
+          cpus: "${POSTGRES_CPUS:-0.5}"
+          memory: ${POSTGRES_MEMORY:-1G}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s

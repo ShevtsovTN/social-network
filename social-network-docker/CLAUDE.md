@@ -5,8 +5,11 @@
 - `nginx/`: Dockerfile, общий `nginx.conf`, server-блоки `native.conf` и `symfony.conf`;
   `frontend.conf` для dev-only `nginx-frontend` (статика и прокси, в bench не входит).
 - `postgres/`: `postgresql.conf` с фиксированными параметрами для воспроизводимых замеров.
-- `bench/`: генераторы нагрузки (`load.php` для `make bench-get`, сценарий k6 `search.js` для `make bench-search`),
-  набор запросов поиска `search-queries.csv`, образ для графиков `plot/` (matplotlib). В приложения не входят.
+  Лимиты CPU и памяти узлов БД задаются в compose (`POSTGRES_CPUS`, `POSTGRES_MEMORY`) и одинаковы у всех узлов.
+- `bench/`: генераторы нагрузки (`load.php` для `make bench-get`, сценарии k6 `search.js` для `make bench-search`
+  и `get.js`/`search.js` для `make bench-read`), набор запросов поиска `search-queries.csv`,
+  список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится),
+  образ для графиков `plot/` (matplotlib). В приложения не входят.
 - `docker-compose.yaml`, `docker-compose.override.yaml` и `.env` лежат в корне репозитория, не здесь.
 
 ## Правила

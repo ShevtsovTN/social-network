@@ -1,0 +1,2 @@
+# Список id для нагрузки GET /user/get/{id}: свой для каждого сидирования (make bench-get-ids).
+get-ids.csv
