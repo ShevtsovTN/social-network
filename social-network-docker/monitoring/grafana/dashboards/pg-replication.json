@@ -41,7 +41,8 @@
           "legendFormat": "",
           "refId": "A",
           "editorMode": "code",
-          "range": true
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -85,7 +86,7 @@
         "textMode": "value",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -116,7 +117,8 @@
           "legendFormat": "",
           "refId": "A",
           "editorMode": "code",
-          "range": true
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -160,7 +162,7 @@
         "textMode": "value",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -191,7 +193,8 @@
           "legendFormat": "",
           "refId": "A",
           "editorMode": "code",
-          "range": true
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -235,7 +238,7 @@
         "textMode": "value",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false

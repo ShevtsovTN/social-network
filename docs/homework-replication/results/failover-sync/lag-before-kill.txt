@@ -1,0 +1,2 @@
+replica1 quorum 2088 2088
+replica2 quorum 2088 2088

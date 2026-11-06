@@ -1,0 +1,2 @@
+replica1 async 3600 3600
+replica2 async 3600 3600
