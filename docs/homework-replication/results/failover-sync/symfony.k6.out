@@ -1,2 +1,2 @@
-rps=9.8 requests=392 acked=135 failed=65.56% p50=2.9ms p95=5000.5ms p99=5000.7ms max=5001.1ms
-Подтверждённых записей: 135 (id в /home/timur/Projects/social-network/docs/homework-replication/results/failover-sync/symfony/acked.log)
+rps=8.7 requests=360 acked=138 failed=61.67% p50=829.6ms p95=2004.6ms p99=3010.7ms max=3988.7ms
+Подтверждённых записей: 138 (id в /home/timur/Projects/social-network/docs/homework-replication/results/failover-sync/symfony/acked.log)

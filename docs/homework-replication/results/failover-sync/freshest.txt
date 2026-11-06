@@ -1,4 +1,4 @@
-replica1: received=0/1DA08E68 replayed=0/1DA08E68
-replica2: received=0/1DA08E68 replayed=0/1DA08E68
+replica1: received=0/1E9F6DF8 replayed=0/1E9F6DF8
+replica2: received=0/1E9F6DF8 replayed=0/1E9F6DF8
 received(replica1) - received(replica2) = 0 байт
 Самая свежая: replica1 (postgres-replica-1)

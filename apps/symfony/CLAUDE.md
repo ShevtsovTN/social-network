@@ -22,6 +22,9 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   `register` и `login` работают с primary, `search` читает реплики, `get` читает реплики через `PrimaryFallbackUserRepository`
   (свежесозданная анкета может ещё не дойти до реплики). Общего подключения и алиаса `UserRepository` по умолчанию нет:
   новый use case обязан выбрать явно. Подход одинаков в `native` и `symfony`.
+- Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
+  `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
+  не действуют (за него отвечает `dns_opt` в compose).
 - Без Doctrine и любого ORM. Только PDO с prepared statements.
 - Infrastructure реализует порты из `core` и не содержит бизнес-правил.
   Реализации по подходу эквивалентны `apps/native`.
