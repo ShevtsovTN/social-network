@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -72,6 +72,12 @@ bench-read: ## Замер чтения (get и search, k6) для ДЗ «Реп�
 bench-plot: ## Графики и таблицы по итогам bench-search в docs/homework-indexes/
 	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
 	docker run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/docs/homework-indexes":/report social-network-bench-plot /report
+
+monitoring-up: ## Мониторинг: Prometheus, postgres_exporter, cAdvisor, Grafana (профиль monitoring; Grafana :3000, Prometheus :9090)
+	$(COMPOSE) -f docker-compose.yaml --profile monitoring up -d prometheus grafana cadvisor postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
+
+monitoring-down: ## Остановить и удалить контейнеры мониторинга (данные Prometheus и Grafana в томах остаются)
+	$(COMPOSE) -f docker-compose.yaml --profile monitoring rm -sf prometheus grafana cadvisor postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
 
 repl-status: ## Состояние репликации: роли узлов, подключённые реплики, лаг
 	./social-network-docker/replication/status.sh

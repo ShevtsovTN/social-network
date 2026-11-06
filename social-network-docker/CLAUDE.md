@@ -9,11 +9,16 @@
   (роль `replicator`, строка в `pg_hba.conf`) и `100_migrations.sh` (миграции из `db/migrations`).
   `replica-entrypoint.sh`: реплика на пустом томе снимает `pg_basebackup -R` с primary и запускается как standby.
   Лимиты CPU и памяти узлов БД задаются в compose (`POSTGRES_CPUS`, `POSTGRES_MEMORY`) и одинаковы у всех узлов.
-- `bench/`: генераторы нагрузки (`load.php` для `make bench-get`, сценарии k6 `search.js` для `make bench-search`
-  и `get.js`/`search.js` для `make bench-read`), набор запросов поиска `search-queries.csv`,
+- `bench/`: генераторы нагрузки (`load.php` для `make bench-get`, сценарии k6 `search.js` для `make bench-search`,
+  `get.js`/`search.js` для `make bench-read`, `write.js` для `make bench-write`), набор запросов поиска `search-queries.csv`,
   список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится),
   образ для графиков `plot/` (matplotlib). В приложения не входят.
-- `replication/`: операционные скрипты репликации (`status.sh` для `make repl-status`; далее failover и переключение sync/async).
+- `replication/`: операционные скрипты репликации: `status.sh` (`make repl-status`), `sync-mode.sh` (`make repl-sync`,
+  `make repl-async`: кворумная синхронная репликация `ANY 1 (replica1, replica2)` и обратно). Штатный режим кластера: async.
+- `haproxy/`: `haproxy.cfg` для балансировки чтения между репликами (tcp, roundrobin, `pgsql-check`; статистика и `/metrics` на :8404).
+- `monitoring/`: `prometheus.yml` и провижининг Grafana (datasource, дашборды в `grafana/dashboards/`). Сервисы
+  (Prometheus, postgres_exporter ×3, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
+  в обычный `make up` не входят. Экспортёр ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`).
 - `docker-compose.yaml`, `docker-compose.override.yaml` и `.env` лежат в корне репозитория, не здесь.
 
 ## Правила
