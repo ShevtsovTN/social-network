@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed repl-status bench-search-queries bench-search bench-get-ids bench-read bench-plot
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -75,6 +75,15 @@ bench-plot: ## Графики и таблицы по итогам bench-search �
 
 repl-status: ## Состояние репликации: роли узлов, подключённые реплики, лаг
 	./social-network-docker/replication/status.sh
+
+repl-sync: ## Кворумная синхронная репликация: ANY 1 (replica1, replica2)
+	./social-network-docker/replication/sync-mode.sh sync
+
+repl-async: ## Вернуть асинхронную репликацию
+	./social-network-docker/replication/sync-mode.sh async
+
+bench-write: ## Нагрузка на запись (POST /user/register, k6): make bench-write PHASE=name [APP=native] [VUS=16] [DURATION=30s]
+	PHASE=$(PHASE) ./social-network-docker/bench/write.sh
 
 compare: ## Сверка ответов native и symfony на одинаковых запросах (стек должен быть поднят)
 	docker run --rm --network host -v "$(CURDIR)/social-network-docker/compare":/compare:ro php:8.4.26-cli \
