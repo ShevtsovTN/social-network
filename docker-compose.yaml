@@ -15,8 +15,9 @@ x-php-app: &php-app
     # Запись и логин: primary. При failover DB_PRIMARY_HOST указывает на новый мастер.
     DB_HOST: ${DB_PRIMARY_HOST:-postgres}
     DB_PORT: "5432"
-    # Чтение (get и search): реплики через haproxy.
-    DB_READ_HOST: haproxy
+    # Чтение (get и search): реплики через haproxy. DB_READ_HOST=postgres возвращает чтение на primary
+    # (замер baseline «одна нода» для сравнения с репликами).
+    DB_READ_HOST: ${DB_READ_HOST:-haproxy}
     DB_READ_PORT: "5432"
     DB_NAME: ${POSTGRES_DB}
     DB_USER: ${POSTGRES_USER}
