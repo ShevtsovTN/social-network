@@ -30,37 +30,87 @@ x-php-app: &php-app
   networks:
     - backend
 
+x-postgres: &postgres
+  image: postgres:17.10-alpine
+  command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+  # Лимиты одинаковы у всех узлов PostgreSQL (primary и standby), см. CLAUDE.md.
+  # Значения подбираются по baseline: БД должна быть узким местом, иначе реплики прироста не покажут.
+  deploy:
+    resources:
+      limits:
+        cpus: "${POSTGRES_CPUS:-0.5}"
+        memory: ${POSTGRES_MEMORY:-1G}
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+  networks:
+    - backend
+
+x-postgres-env: &postgres-env
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_USER: ${POSTGRES_USER}
+
+x-postgres-replica: &postgres-replica
+  <<: *postgres
+  entrypoint: ["/replica-entrypoint.sh"]
+  # Реплика стартует после primary: ей нужна базовая копия.
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+x-postgres-replica-env: &postgres-replica-env
+  <<: *postgres-env
+  PRIMARY_HOST: postgres
+  REPLICATION_USER: ${REPLICATION_USER}
+  REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+
 services:
+  # --- PostgreSQL: primary и две реплики (потоковая репликация) ---
+  # Primary принимает запись. Реплики снимают базовую копию с primary при первом старте
+  # (replica-entrypoint.sh) и дальше получают WAL; на них возможно только чтение.
   postgres:
-    image: postgres:17.10-alpine
-    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    <<: *postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      <<: *postgres-env
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REPLICATION_USER: ${REPLICATION_USER}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Выполняется один раз, при инициализации пустого тома.
-      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+      # Выполняются один раз, при инициализации пустого тома: роль репликации и pg_hba, затем миграции из /migrations.
+      - ./social-network-docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+      - ./db/migrations:/migrations:ro
       # Скрипты наполнения данными (make seed), запускаются вручную.
       - ./db/seed:/seed:ro
       - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
-    # Лимиты одинаковы у всех узлов PostgreSQL (primary и standby), см. CLAUDE.md.
-    # Значения подбираются по baseline: БД должна быть узким местом, иначе реплики прироста не покажут.
-    deploy:
-      resources:
-        limits:
-          cpus: "${POSTGRES_CPUS:-0.5}"
-          memory: ${POSTGRES_MEMORY:-1G}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - backend
+
+  postgres-replica-1:
+    <<: *postgres-replica
+    environment:
+      <<: *postgres-replica-env
+      REPLICA_NAME: replica1
+    volumes:
+      - pgdata-replica-1:/var/lib/postgresql/data
+      - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    ports:
+      - "${POSTGRES_REPLICA_1_PORT:-5433}:5432"
+
+  postgres-replica-2:
+    <<: *postgres-replica
+    environment:
+      <<: *postgres-replica-env
+      REPLICA_NAME: replica2
+    volumes:
+      - pgdata-replica-2:/var/lib/postgresql/data
+      - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    ports:
+      - "${POSTGRES_REPLICA_2_PORT:-5434}:5432"
 
   # --- Приложение на чистом PHP ---
   php-native:
@@ -107,6 +157,8 @@ services:
 
 volumes:
   pgdata:
+  pgdata-replica-1:
+  pgdata-replica-2:
 
 networks:
   backend:

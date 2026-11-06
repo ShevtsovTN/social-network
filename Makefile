@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed bench-search-queries bench-search bench-get-ids bench-read bench-plot
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed repl-status bench-search-queries bench-search bench-get-ids bench-read bench-plot
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -72,6 +72,9 @@ bench-read: ## Замер чтения (get и search, k6) для ДЗ «Реп�
 bench-plot: ## Графики и таблицы по итогам bench-search в docs/homework-indexes/
 	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
 	docker run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/docs/homework-indexes":/report social-network-bench-plot /report
+
+repl-status: ## Состояние репликации: роли узлов, подключённые реплики, лаг
+	./social-network-docker/replication/status.sh
 
 compare: ## Сверка ответов native и symfony на одинаковых запросах (стек должен быть поднят)
 	docker run --rm --network host -v "$(CURDIR)/social-network-docker/compare":/compare:ro php:8.4.26-cli \
