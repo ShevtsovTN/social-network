@@ -1,0 +1,26 @@
+# Сбор метрик для ДЗ «Репликация». Профиль compose `monitoring` (make monitoring-up).
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # Три узла PostgreSQL. Метка node не меняется при failover, а роль узла видна в pg_replication_is_replica.
+  - job_name: postgres
+    static_configs:
+      - targets: ['postgres-exporter-primary:9187']
+        labels: { node: postgres }
+      - targets: ['postgres-exporter-replica-1:9187']
+        labels: { node: postgres-replica-1 }
+      - targets: ['postgres-exporter-replica-2:9187']
+        labels: { node: postgres-replica-2 }
+
+  # Встроенный экспортёр HAProxy (сессии и состояние реплик в балансировке чтения).
+  - job_name: haproxy
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['haproxy:8404']
+
+  # CPU и память контейнеров (php, postgres, haproxy).
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']

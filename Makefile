@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed bench-search-queries bench-search bench-plot
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -63,9 +63,39 @@ bench-search-queries: ## Сгенерировать набор префиксо�
 bench-search: ## Замер GET /user/search через k6 (после make bench-up и make seed): make bench-search PHASE=before|after
 	PHASE=$(PHASE) ./social-network-docker/bench/search.sh
 
+bench-get-ids: ## Выгрузить случайные id анкет для замера GET /user/get/{id} (get-ids.csv, нужна заполненная БД)
+	./social-network-docker/bench/get-ids.sh
+
+bench-read: ## Замер чтения (get и search, k6) для ДЗ «Репликация»: make bench-read PHASE=baseline|replicas [SCENARIOS="get search"] [LEVELS="1 10 100 1000"]
+	PHASE=$(PHASE) ./social-network-docker/bench/read.sh
+
 bench-plot: ## Графики и таблицы по итогам bench-search в docs/homework-indexes/
 	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
 	docker run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/docs/homework-indexes":/report social-network-bench-plot /report
+
+monitoring-up: ## Мониторинг: Prometheus, postgres_exporter, cAdvisor, Grafana (профиль monitoring; Grafana :3000, Prometheus :9090)
+	$(COMPOSE) -f docker-compose.yaml --profile monitoring up -d prometheus grafana cadvisor postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
+
+monitoring-down: ## Остановить и удалить контейнеры мониторинга (данные Prometheus и Grafana в томах остаются)
+	$(COMPOSE) -f docker-compose.yaml --profile monitoring rm -sf prometheus grafana cadvisor postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
+
+repl-rebuild: ## Пересобрать кластер PostgreSQL с нуля (тома БД удаляются, данные заливаются заново): нужно перед каждым failover
+	./social-network-docker/replication/rebuild.sh
+
+repl-failover: ## Эксперимент с аварией мастера: make repl-failover MODE=async|sync [NETEM_DELAY=300ms] [DURATION=40] [KILL_AFTER=15]
+	./social-network-docker/replication/failover-experiment.sh $(MODE)
+
+repl-status: ## Состояние репликации: роли узлов, подключённые реплики, лаг
+	./social-network-docker/replication/status.sh
+
+repl-sync: ## Кворумная синхронная репликация: ANY 1 (replica1, replica2)
+	./social-network-docker/replication/sync-mode.sh sync
+
+repl-async: ## Вернуть асинхронную репликацию
+	./social-network-docker/replication/sync-mode.sh async
+
+bench-write: ## Нагрузка на запись (POST /user/register, k6): make bench-write PHASE=name [APP=native] [VUS=16] [DURATION=30s]
+	PHASE=$(PHASE) ./social-network-docker/bench/write.sh
 
 compare: ## Сверка ответов native и symfony на одинаковых запросах (стек должен быть поднят)
 	docker run --rm --network host -v "$(CURDIR)/social-network-docker/compare":/compare:ro php:8.4.26-cli \

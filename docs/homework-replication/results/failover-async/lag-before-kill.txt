@@ -1,0 +1,2 @@
+replica1 async 6856 6856
+replica2 async 6856 6856

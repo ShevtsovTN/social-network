@@ -12,8 +12,13 @@ x-php-app: &php-app
     dockerfile: social-network-docker/php/Dockerfile
     target: ${PHP_BUILD_TARGET:-dev}
   environment: &php-env
-    DB_HOST: postgres
+    # Запись и логин: primary. При failover DB_PRIMARY_HOST указывает на новый мастер.
+    DB_HOST: ${DB_PRIMARY_HOST:-postgres}
     DB_PORT: "5432"
+    # Чтение (get и search): реплики через haproxy. DB_READ_HOST=postgres возвращает чтение на primary
+    # (замер baseline «одна нода» для сравнения с репликами).
+    DB_READ_HOST: ${DB_READ_HOST:-haproxy}
+    DB_READ_PORT: "5432"
     DB_NAME: ${POSTGRES_DB}
     DB_USER: ${POSTGRES_USER}
     DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -21,6 +26,14 @@ x-php-app: &php-app
   depends_on:
     postgres:
       condition: service_healthy
+    haproxy:
+      condition: service_started
+  # Короткие таймауты резолвера: имя остановленного или убитого контейнера (например, аварийного primary)
+  # Docker разрешает 5 секунд, libpq пробует дважды, и воркер php-fpm висит 10 секунд на каждой попытке подключения.
+  # Имена живых контейнеров разрешаются мгновенно, таймауты их не касаются.
+  dns_opt:
+    - timeout:1
+    - attempts:1
   # Одинаковые лимиты для обоих приложений: честное нагрузочное сравнение.
   deploy:
     resources:
@@ -30,28 +43,204 @@ x-php-app: &php-app
   networks:
     - backend
 
+x-postgres: &postgres
+  image: postgres:17.10-alpine
+  command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+  # Лимиты одинаковы у всех узлов PostgreSQL (primary и standby), см. CLAUDE.md.
+  # Значения подбираются по baseline: БД должна быть узким местом, иначе реплики прироста не покажут.
+  deploy:
+    resources:
+      limits:
+        cpus: "${POSTGRES_CPUS:-0.5}"
+        memory: ${POSTGRES_MEMORY:-1G}
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+  networks:
+    - backend
+
+x-postgres-env: &postgres-env
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_USER: ${POSTGRES_USER}
+
+x-postgres-replica: &postgres-replica
+  <<: *postgres
+  entrypoint: ["/replica-entrypoint.sh"]
+  # Реплика стартует после primary: ей нужна базовая копия.
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+x-postgres-replica-env: &postgres-replica-env
+  <<: *postgres-env
+  PRIMARY_HOST: postgres
+  REPLICATION_USER: ${REPLICATION_USER}
+  REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+
 services:
+  # --- PostgreSQL: primary и две реплики (потоковая репликация) ---
+  # Primary принимает запись. Реплики снимают базовую копию с primary при первом старте
+  # (replica-entrypoint.sh) и дальше получают WAL; на них возможно только чтение.
   postgres:
-    image: postgres:17.10-alpine
-    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    <<: *postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      <<: *postgres-env
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REPLICATION_USER: ${REPLICATION_USER}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      MONITORING_USER: ${MONITORING_USER}
+      MONITORING_PASSWORD: ${MONITORING_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Выполняется один раз, при инициализации пустого тома.
-      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+      # Выполняются один раз, при инициализации пустого тома: роль репликации и pg_hba, роль мониторинга, миграции из /migrations.
+      - ./social-network-docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+      - ./db/migrations:/migrations:ro
       # Скрипты наполнения данными (make seed), запускаются вручную.
       - ./db/seed:/seed:ro
       - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+
+  postgres-replica-1:
+    <<: *postgres-replica
+    environment:
+      <<: *postgres-replica-env
+      REPLICA_NAME: replica1
+    volumes:
+      - pgdata-replica-1:/var/lib/postgresql/data
+      - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    ports:
+      - "${POSTGRES_REPLICA_1_PORT:-5433}:5432"
+
+  postgres-replica-2:
+    <<: *postgres-replica
+    environment:
+      <<: *postgres-replica-env
+      REPLICA_NAME: replica2
+    volumes:
+      - pgdata-replica-2:/var/lib/postgresql/data
+      - ./social-network-docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    ports:
+      - "${POSTGRES_REPLICA_2_PORT:-5434}:5432"
+
+  # Балансировщик чтения: раскладывает соединения приложений по двум репликам.
+  haproxy:
+    image: haproxy:3.0.11-alpine
+    volumes:
+      - ./social-network-docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      # Статистика: http://localhost:8404/stats
+      - "${HAPROXY_STATS_PORT:-8404}:8404"
+    depends_on:
+      postgres-replica-1:
+        condition: service_healthy
+      postgres-replica-2:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 128M
+    networks:
+      - backend
+
+  # --- Мониторинг (профиль monitoring: make monitoring-up) ---
+  # Не входит в обычный запуск и в замеры. Если замер сделан с мониторингом, это указывается в отчёте.
+  postgres-exporter-primary: &postgres-exporter
+    profiles: [monitoring]
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    environment: &postgres-exporter-env
+      DATA_SOURCE_URI: postgres:5432/${POSTGRES_DB}?sslmode=disable
+      DATA_SOURCE_USER: ${MONITORING_USER}
+      DATA_SOURCE_PASS: ${MONITORING_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    networks:
+      - backend
+
+  postgres-exporter-replica-1:
+    <<: *postgres-exporter
+    environment:
+      <<: *postgres-exporter-env
+      DATA_SOURCE_URI: postgres-replica-1:5432/${POSTGRES_DB}?sslmode=disable
+
+  postgres-exporter-replica-2:
+    <<: *postgres-exporter
+    environment:
+      <<: *postgres-exporter-env
+      DATA_SOURCE_URI: postgres-replica-2:5432/${POSTGRES_DB}?sslmode=disable
+
+  cadvisor:
+    profiles: [monitoring]
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=5s
+      - --disable_metrics=percpu,sched,tcp,udp,disk,diskIO,hugetlb,referenced_memory,cpu_topology,resctrl
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    privileged: true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    networks:
+      - backend
+
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      # Приёмник remote write: сюда k6 пишет метрики нагрузки (-o experimental-prometheus-rw).
+      - --web.enable-remote-write-receiver
+    volumes:
+      - ./social-network-docker/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    networks:
+      - backend
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:12.1.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      # Дашборды открываются без входа (только просмотр); для правок войти под admin.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./social-network-docker/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./social-network-docker/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     networks:
       - backend
 
@@ -100,6 +289,10 @@ services:
 
 volumes:
   pgdata:
+  pgdata-replica-1:
+  pgdata-replica-2:
+  prometheus-data:
+  grafana-data:
 
 networks:
   backend:

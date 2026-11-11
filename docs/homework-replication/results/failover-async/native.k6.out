@@ -1,0 +1,2 @@
+rps=17.5 requests=720 acked=238 failed=66.94% p50=1.0ms p95=2002.9ms p99=2039.0ms max=3046.2ms
+Подтверждённых записей: 238 (id в /home/timur/Projects/social-network/docs/homework-replication/results/failover-async/native/acked.log)

@@ -18,7 +18,7 @@ apps/symfony/            Symfony: Infrastructure + Presentation
 frontend/                статический UI: регистрация, вход, анкета
 db/migrations/           общая SQL-схема
 social-network-docker/   Dockerfile'ы и конфиги php-fpm, nginx, postgres
-docs/                    openapi.json, Postman-коллекция
+docs/                    openapi.json, Postman-коллекция, отчёты по ДЗ (индексы, репликация)
 ```
 
 ## Локальный запуск
@@ -28,7 +28,8 @@ docs/                    openapi.json, Postman-коллекция
 **Требования**
 
 - Docker с Compose v2 (`docker compose version`) и make.
-- Свободные порты 8080, 8081, 8082 и 5432 (меняются в `.env`, см. ниже).
+- Свободные порты 8080, 8081, 8082, 5432 (primary), 5433 и 5434 (реплики), 8404 (статистика HAProxy) (меняются в `.env`, см. ниже).
+  Для мониторинга ещё 3000 (Grafana) и 9090 (Prometheus).
 
 **Первый запуск** (порядок важен: зависимости ставятся до старта приложений, потому что код монтируется в контейнеры вместе с `vendor`)
 
@@ -97,6 +98,29 @@ make reset-db && make up      # удалить данные БД и примен
 - Нужно изменить схему БД или начать с чистого состояния: `make reset-db && make up`.
 
 Режимы dev и bench, а также нагрузочные замеры описаны ниже в разделах «Режимы» и «Нагрузочные замеры и ёмкость».
+
+## Репликация PostgreSQL
+
+Стек поднимает три узла PostgreSQL: `postgres` (primary) и две реплики `postgres-replica-1` и `postgres-replica-2` на потоковой репликации.
+Запись и логин идут на primary (`DB_HOST`), `GET /user/get/{id}` и `GET /user/search` читают с реплик через HAProxy (`DB_READ_HOST`).
+Подробности, замеры и эксперимент с аварией мастера: [`docs/homework-replication/README.md`](docs/homework-replication/README.md).
+
+```
+make repl-status      # роли узлов, подключённые реплики, лаг
+make repl-sync        # кворумная синхронная репликация ANY 1 (replica1, replica2)
+make repl-async       # вернуть асинхронную (штатный режим)
+make monitoring-up    # Prometheus, postgres_exporter, cAdvisor, Grafana (http://localhost:3000, профиль monitoring)
+make bench-read PHASE=replicas                 # замер чтения (get и search, k6), см. docs/homework-replication/
+make bench-write PHASE=write [DURATION=30s]    # нагрузка на запись, клиент считает подтверждённые записи
+make repl-failover MODE=async|sync             # kill -9 primary под нагрузкой, promote, подсчёт потерь
+make repl-rebuild                              # кластер PostgreSQL с нуля (тома БД удаляются, данные заливаются заново)
+```
+
+- Реплики снимают базовую копию с primary при первом старте (`pg_basebackup -R`) и дальше догоняют его сами, в том числе во время
+  `make seed`. Состояние: `make repl-status` (перед замерами лаг должен быть 0).
+- Эксперимент `make repl-failover` убивает primary и разрушает кластер: после него нужен `make repl-rebuild`. Данные БД удаляются.
+- `DB_READ_HOST=postgres make bench-up` возвращает чтение на primary (baseline «одна нода»).
+- Если `.env` создан раньше, добавьте в него новые переменные из `.env.example`: пароль репликации, `MONITORING_*`, `GRAFANA_ADMIN_PASSWORD`, порты.
 
 ## Тесты
 
@@ -268,3 +292,4 @@ Xdebug есть только в dev-образе и по умолчанию вы
 - `openapi.json`: спецификация из задания (источник истины для контракта).
 - `postman/social-network.postman_collection.json`: Postman-коллекция.
 - `homework-indexes/`: отчёт ДЗ «Производительность индексов» (`README.md`), графики, итоги k6 и EXPLAIN.
+- `homework-replication/`: отчёт ДЗ «Репликация» (`README.md`), итоги k6 и экспериментов в `results/`, скриншоты дашбордов в `img/`.

@@ -1,0 +1,2 @@
+rps=8.2 requests=339 acked=236 failed=30.38% p50=506.2ms p95=2005.9ms p99=3009.8ms max=3918.6ms
+Подтверждённых записей: 236 (id в /home/timur/Projects/social-network/docs/homework-replication/results/failover-async/symfony/acked.log)

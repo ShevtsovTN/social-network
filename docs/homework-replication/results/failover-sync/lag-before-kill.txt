@@ -1,0 +1,2 @@
+replica1 quorum 2904 2904
+replica2 quorum 2904 2904
