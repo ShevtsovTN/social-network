@@ -17,7 +17,10 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   (отличаются namespace и префиксом `[symfony]` в логах): те же Lua-скрипты, TTL, длина стрима, таймауты. Описание — в `apps/native/CLAUDE.md`.
   Меняя один из этих классов, меняйте оба приложения: нагрузочное сравнение честно только при одинаковом подходе.
 - `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `QueryParameters`, `MalformedRequest`),
-  `Response/` (`ApiJsonResponse`, `UserPayload`), `Routing/` (`StrictRoutingListener`), `Error/` (`ApiExceptionListener`).
+  `Response/` (`ApiJsonResponse`, `NoContentResponse` для 204, `UserPayload`, `PostPayload`), `Routing/` (`StrictRoutingListener`),
+  `Error/` (`ApiExceptionListener`), `Auth/` (`RequestAuthenticator`: токен из `Authorization: Bearer` в use case `Authenticate`;
+  разбор заголовка — `Request/BearerToken`). Контроллеры друзей, постов и ленты тонкие, как остальные: аутентификация, разбор запроса,
+  вызов use case, ответ; `offset` и `limit` ленты передаются в `core` строками как пришли.
 
 ## Правила
 - Минимальный набор компонентов: http-kernel, routing, dependency-injection
@@ -39,7 +42,15 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - Сервисы `core` и свои реализации портов регистрируем в `services.yaml` явно,
   привязывая интерфейсы к реализациям.
 - Атрибуты и классы Symfony допустимы только в Infrastructure и Presentation.
-- Контроллеры тонкие: разобрать запрос, вызвать handler, вернуть ответ.
+- Контроллеры тонкие: разобрать запрос, вызвать handler, вернуть ответ. Отступления от стандартных REST-практик из контракта
+  (удаление через PUT, `/friend/set`, 204) помечены строкой-комментарием у `#[Route]`.
+- Роутинг чтения и записи ленты (в `services.yaml`, как в `native`): создание, правка, удаление постов, друзья, `GET /post/get/{id}`
+  и воркер работают с primary; холодная пересборка ленты и тела постов для страницы ленты читают реплику.
+  `redis.connection` постоянное (php-fpm), открывается при первой команде.
+- Маппинг ошибок в `ApiExceptionListener`: поле `friendId` домена в ответе называется `userId` (так зовётся параметр пути).
+- Тесты: `tests/Unit` (разбор Authorization, параметры запроса, маппинг ошибок, 204) без инфраструктуры, `tests/Integration`
+  на реальных PostgreSQL и Redis. Сквозная проверка контракта: Postman-коллекция через newman. Проверка контейнера DI:
+  `bin/console lint:container` и `cache:warmup` в prod.
 - Формат ответов и коды ошибок строго по `docs/openapi.json`, идентично `apps/native`.
 - Интеграционные тесты наследуют contract-тесты из `core`.
 - Для замеров: `APP_ENV=prod`, `APP_DEBUG=0`, прогретый кэш,

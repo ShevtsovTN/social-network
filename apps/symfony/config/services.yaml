@@ -45,6 +45,83 @@ services:
       $replica: '@repository.user.replica'
       $primary: !service_closure '@repository.user.primary'
 
+  # --- Лента постов (ДЗ «Лента постов») ---
+  # Роутинг чтения и записи решается здесь, а не в репозиториях:
+  # - создание, правка и удаление постов, друзья, GET /post/get и backfill воркера работают с primary
+  #   (свежесозданный пост должен быть виден сразу, без лага реплики);
+  # - холодная пересборка ленты и тела постов для страницы ленты читают реплику (устаревание допустимо: воркер
+  #   кладёт тело нового поста в кэш сразу, поэтому реплика нужна только при промахе кэша).
+  repository.post.primary:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoPostRepository
+    arguments:
+      $connection: '@pdo.primary'
+
+  repository.post.replica:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoPostRepository
+    arguments:
+      $connection: '@pdo.replica'
+
+  repository.friendship.primary:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoFriendshipRepository
+    arguments:
+      $connection: '@pdo.primary'
+
+  feed_source.primary:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoFeedSource
+    arguments:
+      $connection: '@pdo.primary'
+
+  feed_source.replica:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoFeedSource
+    arguments:
+      $connection: '@pdo.replica'
+
+  SocialNetwork\SymfonyApp\Infrastructure\Security\RandomPostIdGenerator: ~
+  SocialNetwork\Core\Application\Port\PostIdGenerator:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Security\RandomPostIdGenerator
+
+  # Redis: кэш ленты и очередь событий. Ключи, стрим и группа с префиксом приложения: native и symfony не делят данные.
+  # Подключение постоянное (php-fpm), открывается при первой команде, а не при сборке сервиса.
+  redis.connection:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisConnection
+    arguments:
+      $host: '%env(REDIS_HOST)%'
+      $port: '%env(int:REDIS_PORT)%'
+      $password: '%env(REDIS_PASSWORD)%'
+      $persistent: true
+      $connectTimeoutSeconds: 1.0
+      $readTimeoutSeconds: 1.0
+
+  redis.keyspace:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisKeyspace
+    arguments:
+      $prefix: '%env(REDIS_KEY_PREFIX)%'
+
+  SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisFeedCache:
+    arguments:
+      $connection: '@redis.connection'
+      $keyspace: '@redis.keyspace'
+      $ttlSeconds: 3600
+  SocialNetwork\Core\Application\Port\FeedCache:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisFeedCache
+
+  SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisPostCache:
+    arguments:
+      $connection: '@redis.connection'
+      $keyspace: '@redis.keyspace'
+      $ttlSeconds: 3600
+  SocialNetwork\Core\Application\Port\PostCache:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisPostCache
+
+  SocialNetwork\SymfonyApp\Infrastructure\Queue\FeedEventSerializer: ~
+
+  SocialNetwork\SymfonyApp\Infrastructure\Queue\RedisFeedEventPublisher:
+    arguments:
+      $connection: '@redis.connection'
+      $keyspace: '@redis.keyspace'
+  SocialNetwork\Core\Application\Port\FeedEventPublisher:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Queue\RedisFeedEventPublisher
+
   SocialNetwork\SymfonyApp\Infrastructure\Security\Argon2PasswordHasher: ~
   SocialNetwork\Core\Application\Port\PasswordHasher:
     alias: SocialNetwork\SymfonyApp\Infrastructure\Security\Argon2PasswordHasher
@@ -87,10 +164,59 @@ services:
   SocialNetwork\Core\Application\SearchUsers\SearchUsers:
     alias: SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler
 
+  SocialNetwork\Core\Application\Authenticate\AuthenticateHandler: ~
+  SocialNetwork\Core\Application\Authenticate\Authenticate:
+    alias: SocialNetwork\Core\Application\Authenticate\AuthenticateHandler
+  SocialNetwork\Core\Application\AddFriend\AddFriendHandler:
+    arguments:
+      $users: '@repository.user.primary'
+      $friendships: '@repository.friendship.primary'
+  SocialNetwork\Core\Application\AddFriend\AddFriend:
+    alias: SocialNetwork\Core\Application\AddFriend\AddFriendHandler
+  SocialNetwork\Core\Application\RemoveFriend\RemoveFriendHandler:
+    arguments:
+      $friendships: '@repository.friendship.primary'
+  SocialNetwork\Core\Application\RemoveFriend\RemoveFriend:
+    alias: SocialNetwork\Core\Application\RemoveFriend\RemoveFriendHandler
+  SocialNetwork\Core\Application\CreatePost\CreatePostHandler:
+    arguments:
+      $posts: '@repository.post.primary'
+  SocialNetwork\Core\Application\CreatePost\CreatePost:
+    alias: SocialNetwork\Core\Application\CreatePost\CreatePostHandler
+  SocialNetwork\Core\Application\UpdatePost\UpdatePostHandler:
+    arguments:
+      $posts: '@repository.post.primary'
+  SocialNetwork\Core\Application\UpdatePost\UpdatePost:
+    alias: SocialNetwork\Core\Application\UpdatePost\UpdatePostHandler
+  SocialNetwork\Core\Application\DeletePost\DeletePostHandler:
+    arguments:
+      $posts: '@repository.post.primary'
+  SocialNetwork\Core\Application\DeletePost\DeletePost:
+    alias: SocialNetwork\Core\Application\DeletePost\DeletePostHandler
+  SocialNetwork\Core\Application\GetPost\GetPostHandler:
+    arguments:
+      $posts: '@repository.post.primary'
+  SocialNetwork\Core\Application\GetPost\GetPost:
+    alias: SocialNetwork\Core\Application\GetPost\GetPostHandler
+  SocialNetwork\Core\Application\GetFeed\GetFeedHandler:
+    arguments:
+      $feedSource: '@feed_source.replica'
+      $posts: '@repository.post.replica'
+  SocialNetwork\Core\Application\GetFeed\GetFeed:
+    alias: SocialNetwork\Core\Application\GetFeed\GetFeedHandler
+
   # --- Presentation ---
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\RegisterUserController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\LoginController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetUserController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\SearchUsersController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Auth\RequestAuthenticator: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\SetFriendController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\DeleteFriendController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\CreatePostController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\UpdatePostController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\DeletePostController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetPostController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetFeedController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Error\ApiExceptionListener: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Routing\StrictRoutingListener: ~

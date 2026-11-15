@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Приводит маршрутизацию Symfony к строгости apps/native (контракт описывает ровно три маршрута):
+ * Приводит маршрутизацию Symfony к строгости apps/native (контракт описывает фиксированный набор маршрутов с точными методами):
  * без редиректа с лишним слэшем в конце пути (там 404) и без неявного HEAD как GET (там 405).
  * Приоритет 31: сразу после RouterListener (32), который кладёт результат матчинга в атрибуты запроса.
  */
