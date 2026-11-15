@@ -8,7 +8,12 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `config/`: composition root, ручная сборка зависимостей (без autowiring).
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
   при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`.
-- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
+- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` (UUIDv7).
+- `src/Infrastructure/Redis/` (ДЗ «Лента постов»): `RedisConnection` (ленивое подключение, таймауты, превращает ошибки сервера
+  в `RedisException`), `RedisKeyspace` (имена ключей с префиксом приложения), `LuaScript` (EVALSHA с запасным EVAL),
+  `RedisFeedCache` (лента в ZSET, Lua-скрипты), `RedisPostCache` (тела постов в JSON с TTL). Сбои превращаются в `CacheUnavailable`.
+- `src/Infrastructure/Queue/`: `FeedEventSerializer`, `RedisFeedEventPublisher` (best-effort, не бросает исключений),
+  `RedisFeedEventConsumer` (consumer group, XAUTOCLAIM для зависших событий, XACK и XDEL; ошибки Redis пробрасываются).
 - `src/Presentation/Http/`: `Application` (вход слоя: Request → JsonResponse) и подкаталоги по ответственности:
   `Request/` (запрос, JSON-тело, параметры строки запроса, `MalformedRequest`), `Response/` (`JsonResponse`, `UserPayload`),
   `Routing/` (роутер, маршрут, `RouteNotFound`, `MethodNotAllowed`), `Controller/` (интерфейс и контроллеры),
@@ -25,6 +30,11 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
   `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
   не действуют (за него отвечает `dns_opt` в compose).
+- Redis: подключение ленивое (недоступный Redis обнаруживается внутри кэша, а не при сборке контроллера, иначе чтение ленты
+  не смогло бы уйти в БД). Лента: score = микросекунды создания, служебный элемент `-` со score 0 держит пустую ленту живой,
+  вместимость берётся из `FeedLimits::CAPACITY`. Таймаут чтения `RedisConnection` у воркера должен быть больше блокирующего ожидания
+  `XREADGROUP`, иначе phpredis обрывает соединение. phpredis возвращает ошибки сервера как `false`, а не исключение:
+  команды выполняются через `RedisConnection::execute()`.
 - Только prepared statements с именованными параметрами, без ORM. Запросы статические: даже список id передаётся одним
   параметром-массивом (`ANY(CAST(:ids AS uuid[]))`), а не собирается из плейсхолдеров.
 - Бизнес-логики в `native` нет: проверка владельца поста, границы и значения по умолчанию страницы ленты, вместимость ленты (1000),
