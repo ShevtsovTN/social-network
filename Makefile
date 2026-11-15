@@ -111,10 +111,10 @@ redis-flush: ## Сбросить весь Redis (ленты, тела посто
 	$(COMPOSE) exec redis redis-cli FLUSHALL
 
 worker-restart: ## Перезапустить воркеры ленты (после правок кода в dev воркер держит старый код в памяти)
-	$(COMPOSE) restart worker-native
+	$(COMPOSE) restart worker-native worker-symfony
 
 worker-logs: ## Логи воркеров ленты
-	$(COMPOSE) logs -f --tail=100 worker-native
+	$(COMPOSE) logs -f --tail=100 worker-native worker-symfony
 
 reset-db: ## Остановить стек и удалить данные БД (миграции применятся заново при следующем up)
 	$(COMPOSE) down -v

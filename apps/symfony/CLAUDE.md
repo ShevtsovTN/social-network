@@ -16,6 +16,10 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   `RedisPostCache`, `FeedEventSerializer`, `RedisFeedEventPublisher`, `RedisFeedEventConsumer`. Копии классов `apps/native`
   (отличаются namespace и префиксом `[symfony]` в логах): те же Lua-скрипты, TTL, длина стрима, таймауты. Описание — в `apps/native/CLAUDE.md`.
   Меняя один из этих классов, меняйте оба приложения: нагрузочное сравнение честно только при одинаковом подходе.
+- `src/Presentation/Console/FeedWorkerCommand`: команда `feed:work`, воркер ленты (цикл вокруг use case `ProcessNextFeedEvent`; при ошибке
+  инфраструктуры завершается с кодом 1, перезапуск делает docker compose). Запускать от `www-data`. Сервисы воркера в `services.yaml`:
+  `redis.connection.worker` (обычное подключение, таймаут чтения 10 с), `feed_cache.worker`, `post_cache.worker`, потребитель очереди
+  (имя из `HOSTNAME`), `ApplyFeedEventHandler` на primary.
 - `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `QueryParameters`, `MalformedRequest`),
   `Response/` (`ApiJsonResponse`, `NoContentResponse` для 204, `UserPayload`, `PostPayload`), `Routing/` (`StrictRoutingListener`),
   `Error/` (`ApiExceptionListener`), `Auth/` (`RequestAuthenticator`: токен из `Authorization: Bearer` в use case `Authenticate`;

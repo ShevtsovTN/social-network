@@ -336,6 +336,27 @@ services:
       APP_SECRET: ${SYMFONY_APP_SECRET}
       REDIS_KEY_PREFIX: symfony
 
+  # Воркер ленты Symfony: та же роль, что у worker-native. Команда запускается от www-data: от root консоль оставила бы
+  # в APP_VAR_DIR файлы, которые php-fpm потом не сможет перезаписать. init: true нужен, чтобы PHP как PID 1 получал SIGTERM.
+  worker-symfony:
+    <<: *php-app
+    working_dir: /app/apps/symfony
+    command: ["php", "bin/console", "feed:work"]
+    user: www-data
+    init: true
+    restart: unless-stopped
+    environment:
+      <<: *php-env
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      APP_SECRET: ${SYMFONY_APP_SECRET}
+      REDIS_KEY_PREFIX: symfony
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+
   nginx-symfony:
     image: social-network-nginx-symfony
     build:

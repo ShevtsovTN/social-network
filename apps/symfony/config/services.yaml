@@ -1,3 +1,7 @@
+parameters:
+  # Имя потребителя очереди, если в окружении нет HOSTNAME (в контейнере его задаёт docker).
+  feed.worker.consumer_name_fallback: feed-worker
+
 services:
   _defaults:
     autowire: true
@@ -115,6 +119,43 @@ services:
 
   SocialNetwork\SymfonyApp\Infrastructure\Queue\FeedEventSerializer: ~
 
+  # Воркер ленты (bin/console feed:work): тот же код приложения отдельным процессом. Подключение к Redis обычное,
+  # не постоянное, с таймаутом чтения больше блокирующего ожидания XREADGROUP (5 с), иначе phpredis оборвёт соединение.
+  # Данные воркер берёт с primary: реплика может отставать, а свежий пост или правка не должны теряться.
+  # Зависшее событие (воркер упал на середине) другой экземпляр забирает через 30 с.
+  redis.connection.worker:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisConnection
+    arguments:
+      $host: '%env(REDIS_HOST)%'
+      $port: '%env(int:REDIS_PORT)%'
+      $password: '%env(REDIS_PASSWORD)%'
+      $persistent: false
+      $connectTimeoutSeconds: 1.0
+      $readTimeoutSeconds: 10.0
+
+  feed_cache.worker:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisFeedCache
+    arguments:
+      $connection: '@redis.connection.worker'
+      $keyspace: '@redis.keyspace'
+      $ttlSeconds: 3600
+
+  post_cache.worker:
+    class: SocialNetwork\SymfonyApp\Infrastructure\Redis\RedisPostCache
+    arguments:
+      $connection: '@redis.connection.worker'
+      $keyspace: '@redis.keyspace'
+      $ttlSeconds: 3600
+
+  SocialNetwork\SymfonyApp\Infrastructure\Queue\RedisFeedEventConsumer:
+    arguments:
+      $connection: '@redis.connection.worker'
+      $keyspace: '@redis.keyspace'
+      $consumerName: '%env(default:feed.worker.consumer_name_fallback:HOSTNAME)%'
+      $redeliverAfterMilliseconds: 30000
+  SocialNetwork\Core\Application\Port\FeedEventConsumer:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Queue\RedisFeedEventConsumer
+
   SocialNetwork\SymfonyApp\Infrastructure\Queue\RedisFeedEventPublisher:
     arguments:
       $connection: '@redis.connection'
@@ -205,6 +246,19 @@ services:
   SocialNetwork\Core\Application\GetFeed\GetFeed:
     alias: SocialNetwork\Core\Application\GetFeed\GetFeedHandler
 
+  SocialNetwork\Core\Application\ApplyFeedEvent\ApplyFeedEventHandler:
+    arguments:
+      $posts: '@repository.post.primary'
+      $friendships: '@repository.friendship.primary'
+      $feedSource: '@feed_source.primary'
+      $feedCache: '@feed_cache.worker'
+      $postCache: '@post_cache.worker'
+  SocialNetwork\Core\Application\ApplyFeedEvent\ApplyFeedEvent:
+    alias: SocialNetwork\Core\Application\ApplyFeedEvent\ApplyFeedEventHandler
+  SocialNetwork\Core\Application\ProcessNextFeedEvent\ProcessNextFeedEventHandler: ~
+  SocialNetwork\Core\Application\ProcessNextFeedEvent\ProcessNextFeedEvent:
+    alias: SocialNetwork\Core\Application\ProcessNextFeedEvent\ProcessNextFeedEventHandler
+
   # --- Presentation ---
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\RegisterUserController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\LoginController: ~
@@ -220,3 +274,4 @@ services:
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetFeedController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Error\ApiExceptionListener: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Routing\StrictRoutingListener: ~
+  SocialNetwork\SymfonyApp\Presentation\Console\FeedWorkerCommand: ~

@@ -19,6 +19,15 @@ services:
     volumes:
       - .:/app
 
+  # Воркер читает код при старте и держит его в памяти: после правок перезапустите его (make worker-restart).
+  worker-symfony:
+    volumes:
+      - .:/app
+    environment:
+      # Как у php-symfony: в dev контейнер DI пересобирается при изменении конфигов; bench остаётся на prod.
+      APP_ENV: dev
+      APP_DEBUG: "1"
+
   php-symfony:
     volumes:
       - .:/app

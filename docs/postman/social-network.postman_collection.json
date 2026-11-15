@@ -2469,7 +2469,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Лента итогово согласована (асинхронный fan-out): ждём, пока условие выполнится.",
-                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "const baseUrl = pm.variables.get('baseUrl');",
                   "const token = pm.collectionVariables.get('token');",
                   "const postId = pm.collectionVariables.get('postId');",
                   "const postText = pm.collectionVariables.get('postText');",
@@ -2659,7 +2659,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Второй пользователь публикует ещё один пост уже после дружбы, ждём его в ленте первым.",
-                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "const baseUrl = pm.variables.get('baseUrl');",
                   "const token = pm.collectionVariables.get('token');",
                   "pm.sendRequest({",
                   "    url: baseUrl + '/post/create',",
@@ -3175,7 +3175,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Лента итогово согласована (асинхронный fan-out): ждём, пока условие выполнится.",
-                  "const baseUrl = pm.collectionVariables.get('baseUrl');",
+                  "const baseUrl = pm.variables.get('baseUrl');",
                   "const token = pm.collectionVariables.get('token');",
                   "const postId = pm.collectionVariables.get('postId');",
                   "const postText = pm.collectionVariables.get('postText');",

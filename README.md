@@ -130,10 +130,10 @@ make repl-rebuild                              # кластер PostgreSQL с н
 **Статус работы** (обновляется по мере выполнения шагов):
 
 - Готово: контракт и Postman-папки, миграция `003` (таблицы `friendships` и `posts`), сервис Redis и phpredis в PHP-образе,
-  use case'ы и порты в `core`, приложение native целиком (PDO, Redis-кэш, очередь на Redis Streams, воркер `worker-native`,
-  HTTP-маршруты): Postman-коллекция проходит против native (150 проверок), в том числе с остановленным Redis.
-- Не готово: реализация в symfony, сид друзей и постов, замеры и отчёт `docs/homework-feed/`. Против symfony папки
-  «Second user», «Posts», «Friends» и «Feed» пока не проходят.
+  use case'ы и порты в `core`, оба приложения целиком (PDO, Redis-кэш, очередь на Redis Streams, воркеры `worker-native` и
+  `worker-symfony`, HTTP-маршруты): Postman-коллекция проходит против native и symfony (150 проверок каждое), в том числе
+  с остановленным Redis.
+- Не готово: сверка ответов приложений в `make compare`, сид друзей и постов, замеры и отчёт `docs/homework-feed/`.
 
 **Как устроено**
 
@@ -142,8 +142,9 @@ make repl-rebuild                              # кластер PostgreSQL с н
   после потери данных ленты пересобираются из PostgreSQL. Ленты миллиона пользователей в памяти не помещаются, поэтому событие
   о новом посте пишется только в уже существующие ленты, остальные собираются лениво при чтении.
 - Событие о новом посте уходит в Redis Streams, воркер раскладывает его по лентам асинхронно, поэтому лента итогово согласована.
-  Воркер (`worker-native`) — тот же код приложения отдельным процессом: `make up` запускает его вместе со стеком, логи `make worker-logs`,
-  после правок кода в dev `make worker-restart`. При ошибке инфраструктуры воркер завершается и перезапускается docker'ом,
+  Воркер (`worker-native`, `worker-symfony`) — тот же код приложения отдельным процессом (у Symfony это команда `feed:work`,
+  запускается от `www-data`): `make up` запускает воркеры вместе со стеком, логи `make worker-logs`, после правок кода в dev
+  `make worker-restart`. При ошибке инфраструктуры воркер завершается и перезапускается docker'ом,
   необработанное событие приходит снова (at-least-once, все операции идемпотентны).
 - Если Redis недоступен, чтение ленты идёт напрямую из PostgreSQL (медленнее, но верно), а публикация событий молча пропускается:
   после возвращения Redis ленты собираются заново из БД.
@@ -166,8 +167,8 @@ make repl-rebuild                              # кластер PostgreSQL с н
    Проверка: `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'` должна показать
    `users`, `friendships` и `posts`. Повторный запуск `003` завершится ошибкой «relation already exists», это нормально.
    Чистая БД с нуля: `make reset-db && make up` (после этого миллион анкет заливается заново, `make seed`).
-3. Проверить Redis и воркер: `make redis-cli c="PING"` отвечает `PONG`, `make ps` показывает `redis` как healthy, а `worker-native`
-   как Up; `make worker-logs` содержит строку `feed worker started`.
+3. Проверить Redis и воркеры: `make redis-cli c="PING"` отвечает `PONG`, `make ps` показывает `redis` как healthy, а `worker-native`
+   и `worker-symfony` как Up; `make worker-logs` содержит строки `feed worker started`.
 4. Прогнать Postman-коллекцию против обоих приложений (раздел «Postman-коллекция» ниже): папки «Second user», «Posts»,
    «Friends» и «Feed» проверяют весь контракт ДЗ, включая итоговую согласованность ленты (запросы ленты опрашивают API до 10 секунд).
 5. Ручной сценарий (порт 8081 для native, 8082 для Symfony; `Authorization: Bearer <token>` берётся из `/login`):
@@ -240,7 +241,8 @@ docker run --rm --network host -v "$PWD":/etc/newman:ro postman/newman \
   run social-network.postman_collection.json -e native.postman_environment.json
 ```
 
-Для Symfony замените окружение на `symfony.postman_environment.json`.
+Для Symfony замените окружение на `symfony.postman_environment.json`. Скрипты коллекции берут адрес через `pm.variables.get('baseUrl')`
+(он учитывает окружение), поэтому прогон против symfony действительно идёт в symfony.
 Папка «Search users» ищет пользователя, созданного в «Register - success», поэтому сид для коллекции не нужен.
 Папки «Second user», «Posts», «Friends» и «Feed» относятся к ДЗ «Лента постов» (ветка `homework-feed`): они описывают контракт
 из `docs/openapi.json` и проходят только после реализации методов в обоих приложениях. Лента итогово согласована, поэтому её
