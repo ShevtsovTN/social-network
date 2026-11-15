@@ -3,7 +3,7 @@
   "info": {
     "title": "Social Network API",
     "version": "1.0.0",
-    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id, поиск анкет по префиксу имени и фамилии. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично."
+    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id, поиск анкет по префиксу имени и фамилии, друзья, посты и лента постов друзей. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично. Методы друзей и постов (ДЗ «Лента постов») взяты из спецификации OTUS (https://github.com/OtusTeam/highload/blob/master/homework/openapi.json) с намеренными отступлениями; каждое отступление описано в description соответствующей операции. Общие отступления: имена полей и параметров в camelCase (в спецификации OTUS snake_case, например authorUserId вместо author_user_id); успешное создание возвращает 201 и объект {id}; операции без результата возвращают 204 без тела (в OTUS 200); отсутствующий ресурс — 404 (в OTUS такого ответа нет)."
   },
   "paths": {
     "/login": {
@@ -155,9 +155,284 @@
           }
         }
       }
+    },
+    "/friend/set/{userId}": {
+      "put": {
+        "operationId": "setFriend",
+        "summary": "Добавить пользователя в друзья",
+        "description": "Текущий пользователь (из токена) добавляет userId в друзья. Дружба односторонняя: это не делает текущего пользователя другом userId, а лента строится по тем, кого пользователь добавил сам. Уже существующие посты нового друга (до 1000 последних) появляются в ленте текущего пользователя асинхронно (итоговая согласованность). Операция идемпотентна: повторный вызов тоже возвращает 204. Нестандартно: изменение состояния через PUT без тела, а не POST (так в спецификации OTUS); путь /friend/set, как в спецификации OTUS, хотя в тексте ДЗ метод назван /friend/add; параметр называется userId, а не user_id (camelCase нашего контракта).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/UserId" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Пользователь добавлен в друзья (или уже был другом)" },
+          "400": {
+            "description": "userId не является валидным UUID или совпадает с id текущего пользователя (field = \"userId\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": {
+            "description": "Пользователь userId не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friend/delete/{userId}": {
+      "put": {
+        "operationId": "deleteFriend",
+        "summary": "Удалить пользователя из друзей",
+        "description": "Текущий пользователь (из токена) убирает userId из друзей. Посты бывшего друга исчезают из ленты текущего пользователя асинхронно (итоговая согласованность). Операция идемпотентна: если userId не был другом (или не существует), ответ тоже 204. Нестандартно: удаление через PUT, а не DELETE (так в спецификации OTUS); параметр называется userId, а не user_id (camelCase нашего контракта).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/UserId" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Пользователь больше не в списке друзей" },
+          "400": {
+            "description": "userId не является валидным UUID (field = \"userId\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/post/create": {
+      "post": {
+        "operationId": "createPost",
+        "summary": "Создать пост",
+        "description": "Автор — текущий пользователь (из токена). Пост сразу доступен через /post/get, а в лентах друзей появляется асинхронно (итоговая согласованность): между ответом и появлением в ленте может пройти время. Нестандартно: успешный ответ — 201 с объектом {id} (в спецификации OTUS 200 и голая строка PostId); так же устроен ответ /user/register.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePostRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пост создан",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreatePostResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Данные не прошли валидацию (field = \"text\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/post/update": {
+      "put": {
+        "operationId": "updatePost",
+        "summary": "Изменить текст своего поста",
+        "description": "Менять можно только свои посты. Чужой и несуществующий пост неразличимы: оба дают 404, чтобы не раскрывать существование постов. Изменённый текст появляется в лентах друзей асинхронно (итоговая согласованность). Нестандартно: PUT на коллекцию с id в теле, а не на ресурс /post/{id} (так в спецификации OTUS); успешный ответ — 204 без тела (в OTUS 200).",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePostRequest" }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Текст поста изменён" },
+          "400": {
+            "description": "Данные не прошли валидацию (field = \"id\" или \"text\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": {
+            "description": "Пост не найден или принадлежит другому пользователю",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/delete/{id}": {
+      "put": {
+        "operationId": "deletePost",
+        "summary": "Удалить свой пост",
+        "description": "Удалять можно только свои посты. Чужой и несуществующий пост неразличимы: оба дают 404, чтобы не раскрывать существование постов. Удалённый пост перестаёт попадать в ленты друзей асинхронно (итоговая согласованность). Нестандартно: удаление через PUT, а не DELETE (так в спецификации OTUS); успешный ответ — 204 без тела (в OTUS 200).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/PostId" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Пост удалён" },
+          "400": {
+            "description": "id не является валидным UUID (field = \"id\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": {
+            "description": "Пост не найден или принадлежит другому пользователю",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/get/{id}": {
+      "get": {
+        "operationId": "getPost",
+        "summary": "Получить пост по id",
+        "description": "Публичный эндпоинт, авторизация не требуется (так в спецификации OTUS: у остальных методов постов bearer-авторизация, у этого её нет). Нестандартно: в спецификации OTUS для этого метода указан ответ 401, но авторизации он не требует, поэтому 401 здесь не бывает; отсутствующий пост — 404.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/PostId" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Пост",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Post" }
+              }
+            }
+          },
+          "400": {
+            "description": "id не является валидным UUID (field = \"id\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Пост не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/feed": {
+      "get": {
+        "operationId": "getPostFeed",
+        "summary": "Лента постов друзей",
+        "description": "Посты друзей текущего пользователя (тех, кого он добавил через /friend/set), от новых к старым; собственные посты в ленту не входят. После /friend/set в ленте появляются уже существующие посты нового друга, после /friend/delete посты бывшего друга исчезают. Лента формируется на уровне кеша и содержит не более 1000 последних постов: страница, лежащая целиком или частично за этой границей, укорочена или пуста (offset + limit больше 1000 — не ошибка). Нет друзей или постов — пустой массив. Лента итогово согласована: свежий пост друга может появиться не сразу. Нестандартно: limit ограничен сверху 100 (в OTUS верхней границы нет), offset и limit — целые числа (в OTUS number).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "С какой позиции начинать выдачу",
+            "schema": { "type": "integer", "minimum": 0, "default": 0, "example": 100 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Максимальное число постов в ответе",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10, "example": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Страница ленты (возможно, пустой список)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Post" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "offset или limit не являются целыми числами или вышли за допустимые границы (field = \"offset\" или \"limit\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Токен из /login в заголовке Authorization: Bearer <token>. Формат токена определяет реализация приложения."
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Токен отсутствует или невалиден",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          }
+        }
+      }
+    },
     "schemas": {
       "UserId": {
         "type": "string",
@@ -246,6 +521,51 @@
           "gender": { "$ref": "#/components/schemas/Gender" },
           "interests": { "$ref": "#/components/schemas/Interests" },
           "city": { "type": "string" }
+        }
+      },
+      "PostId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID, регистр не важен (сравнение после lower-casing).",
+        "example": "1d535fd6-7521-4cb1-aa6d-031be7123c4d"
+      },
+      "PostText": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000,
+        "description": "Текст поста. Не пустой после trim, без управляющих символов, кроме перевода строки.",
+        "example": "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "$ref": "#/components/schemas/PostText" }
+        }
+      },
+      "CreatePostResponse": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/PostId" }
+        }
+      },
+      "UpdatePostRequest": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/PostId" },
+          "text": { "$ref": "#/components/schemas/PostText" }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "description": "Пост пользователя. Нестандартно: поле authorUserId вместо author_user_id из спецификации OTUS (camelCase нашего контракта).",
+        "required": ["id", "text", "authorUserId"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/PostId" },
+          "text": { "$ref": "#/components/schemas/PostText" },
+          "authorUserId": { "$ref": "#/components/schemas/UserId" }
         }
       },
       "ErrorResponse": {
