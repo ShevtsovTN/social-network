@@ -33,6 +33,10 @@ final readonly class JsonResponse
         http_response_code($this->status);
 
         if ($this->body === null) {
+            // Без тела нет и Content-Type. PHP сам добавил бы text/html (default_mimetype); пустое значение отключает
+            // заголовок по умолчанию, и ответ совпадает с Symfony.
+            ini_set('default_mimetype', '');
+
             return;
         }
 

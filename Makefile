@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -97,9 +97,12 @@ repl-async: ## Вернуть асинхронную репликацию
 bench-write: ## Нагрузка на запись (POST /user/register, k6): make bench-write PHASE=name [APP=native] [VUS=16] [DURATION=30s]
 	PHASE=$(PHASE) ./social-network-docker/bench/write.sh
 
-compare: ## Сверка ответов native и symfony на одинаковых запросах (стек должен быть поднят)
+compare: ## Сверка ответов native и symfony на одинаковых запросах, включая друзей, посты и ленту (стек и воркеры должны быть подняты)
 	docker run --rm --network host -v "$(CURDIR)/social-network-docker/compare":/compare:ro php:8.4.26-cli \
 		php /compare/compare.php http://127.0.0.1:$${NATIVE_PORT:-8081} http://127.0.0.1:$${SYMFONY_PORT:-8082}
+
+compare-infrastructure: ## Сверка Infrastructure ленты постов в native и symfony (копии должны совпадать, иначе замеры нечестны)
+	./social-network-docker/compare/infrastructure.sh
 
 seed: ## Заполнить пустую таблицу users миллионом анкет из db/seed/people.v2.csv (стек должен быть поднят)
 	./db/seed/seed.sh

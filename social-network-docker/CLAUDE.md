@@ -31,6 +31,8 @@
 - `monitoring/`: `prometheus.yml` и провижининг Grafana (datasource, дашборды в `grafana/dashboards/`). Сервисы
   (Prometheus, postgres_exporter ×3, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
   в обычный `make up` не входят. Экспортёр ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`).
+- `compare/`: `compare.php` (`make compare`, сверка HTTP-ответов native и symfony, включая друзей, посты и ленту) и `infrastructure.sh`
+  (`make compare-infrastructure`, сверка Infrastructure ленты в двух копиях после нормализации namespace).
 - `docker-compose.yaml`, `docker-compose.override.yaml` и `.env` лежат в корне репозитория, не здесь.
 
 ## Правила

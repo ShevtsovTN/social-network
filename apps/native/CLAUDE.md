@@ -19,7 +19,8 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   `Request/` (запрос, JSON-тело, параметры строки запроса, `MalformedRequest`), `Response/` (`JsonResponse`, `UserPayload`),
   `Routing/` (роутер, маршрут, `RouteNotFound`, `MethodNotAllowed`), `Controller/` (интерфейс и контроллеры),
   `Error/` (обработчик ошибок), `Auth/` (`RequestAuthenticator`: токен из `Authorization: Bearer` в use case `Authenticate`).
-  Ответы без результата — `JsonResponse::noContent()` (204). Контроллеры друзей, постов и ленты тонкие: аутентификация,
+  Ответы без результата — `JsonResponse::noContent()` (204) без заголовка `Content-Type` (иначе PHP добавил бы `text/html`, а Symfony ответ
+  без заголовка; `make compare` это ловит). Контроллеры друзей, постов и ленты тонкие: аутентификация,
   разбор запроса, вызов use case, ответ; `offset` и `limit` ленты передаются в `core` строками как пришли.
 
 ## Правила
