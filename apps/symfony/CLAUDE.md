@@ -11,7 +11,11 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
   при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`
   (копии классов `apps/native`, отличается только namespace: приложения не зависят друг от друга).
-- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
+- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` (UUIDv7).
+- `src/Infrastructure/Redis/` и `src/Infrastructure/Queue/` (ДЗ «Лента постов»): `RedisConnection`, `RedisKeyspace`, `LuaScript`, `RedisFeedCache`,
+  `RedisPostCache`, `FeedEventSerializer`, `RedisFeedEventPublisher`, `RedisFeedEventConsumer`. Копии классов `apps/native`
+  (отличаются namespace и префиксом `[symfony]` в логах): те же Lua-скрипты, TTL, длина стрима, таймауты. Описание — в `apps/native/CLAUDE.md`.
+  Меняя один из этих классов, меняйте оба приложения: нагрузочное сравнение честно только при одинаковом подходе.
 - `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `QueryParameters`, `MalformedRequest`),
   `Response/` (`ApiJsonResponse`, `UserPayload`), `Routing/` (`StrictRoutingListener`), `Error/` (`ApiExceptionListener`).
 
