@@ -12,10 +12,15 @@
 #   LEVELS    "1 10 50 100" (число виртуальных пользователей)
 #   DURATION  30s, WARMUP 10s
 #   APPS      "native symfony"
-#   WARM_SIZE 5000 (сколько читателей участвует в warm; остальные из feed-readers.csv — в cold)
-#   RESTART_PHP 1 (перезапуск php перед замером, см. read.sh); 0 отключает
+#   WARM_SIZE 2000 (сколько читателей участвует в warm; остальные из feed-readers.csv — в cold). Заполнение кэша — это столько же
+#             холодных сборок ленты, без индекса posts(author_id, ...) каждая около полусекунды, поэтому значение держим умеренным
+#   DRAIN_TIMEOUT 120 (секунд ждать, пока воркер разберёт очередь событий; потом очередь обрезается, замер идёт дальше)
+#   RESTART_PHP 1 (перезапуск php вместе с nginx перед замером, см. read.sh); 0 отключает
 # Если замер сделан с профилем monitoring, это нужно указать в отчёте.
 set -euo pipefail
+
+# Числа в awk и сравнения строк не должны зависеть от локали (в ru_RU awk печатает 4,2 вместо 4.2, и CSV ломается).
+export LC_ALL=C
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "${here}/../.." && pwd)"
@@ -25,7 +30,8 @@ levels="${LEVELS:-1 10 50 100}"
 duration="${DURATION:-30s}"
 warmup="${WARMUP:-10s}"
 apps="${APPS:-native symfony}"
-warm_size="${WARM_SIZE:-5000}"
+warm_size="${WARM_SIZE:-2000}"
+drain_timeout="${DRAIN_TIMEOUT:-120}"
 results="${root}/docs/homework-feed/results/${phase}"
 
 declare -A ports=([native]="${NATIVE_PORT:-8081}" [symfony]="${SYMFONY_PORT:-8082}")
@@ -72,10 +78,27 @@ lag="$(compose exec -T postgres sh -c 'psql -X -tA -U "$POSTGRES_USER" -d "$POST
 echo "Лаг репликации: ${lag} байт"
 [ "${lag:-0}" = "0" ] || echo "ВНИМАНИЕ: лаг репликации не нулевой (make repl-status), дождитесь нуля." >&2
 
+# Свежие воркеры php-fpm. php перезапускается ВМЕСТЕ с nginx: у нового контейнера php может оказаться другой IP (при одновременном
+# перезапуске двух контейнеров они меняются адресами), а nginx держит адрес апстрима, разрешённый при старте. Без перезапуска nginx
+# порт одного приложения уходит в контейнер другого, и подписи «native» и «symfony» в результатах путаются.
 if [ "${RESTART_PHP:-1}" = "1" ]; then
-    compose restart php-native php-symfony >/dev/null
+    compose restart php-native php-symfony nginx-native nginx-symfony >/dev/null
     sleep 3
 fi
+
+# Порт приложения обязан вести в его контейнер. Различаем по заголовку: Symfony отдаёт Cache-Control, native нет.
+check_routing() {
+    local app="$1" headers has_cache_control
+    headers="$(curl -s -D - -o /dev/null "http://127.0.0.1:${ports[$app]}/user/get/00000000-0000-4000-8000-000000000000" | tr -d '\r')"
+    has_cache_control="$(grep -ci '^cache-control:' <<< "$headers" || true)"
+    case "$app" in
+        native) [ "$has_cache_control" = "0" ] ;;
+        symfony) [ "$has_cache_control" != "0" ] ;;
+    esac || { echo "Порт ${app} ведёт не в контейнер ${app}: перезапустите nginx вместе с php (docker compose restart nginx-native nginx-symfony)." >&2; exit 1; }
+}
+for app in $apps; do
+    check_routing "$app"
+done
 
 # Сэмплер CPU и памяти контейнеров: раз в 5 с в docker-stats.log рядом с итогами, перед каждым прогоном в лог пишется
 # метка «# <режим> <приложение> c<N>». Нужен, чтобы видеть, что упирается в лимит (php, БД, Redis или воркер).
@@ -143,19 +166,34 @@ k6() {
         grafana/k6:1.3.0 run --quiet "$@" "/bench/${script}.js"
 }
 
-# Ждёт, пока воркер разберёт очередь событий приложения; печатает секунды ожидания. Не дольше 300 с.
+# Ждёт, пока воркер разберёт очередь событий приложения, не дольше $drain_timeout секунд. Печатает через пробел секунды ожидания
+# и сколько событий осталось (0 — очередь пуста).
 queue_wait() {
-    local app="$1" started elapsed
-    started="$(date +%s.%N)"
-    while [ "$(redis_cli XLEN "${app}:feed-events")" != "0" ]; do
-        elapsed="$(awk -v a="$started" -v b="$(date +%s.%N)" 'BEGIN {printf "%.1f", b - a}')"
-        if awk -v e="$elapsed" 'BEGIN {exit !(e > 300)}'; then
-            echo "очередь ${app} не опустела за 300 с" >&2
+    local app="$1" started now elapsed remaining
+    started="$(date +%s)"
+    while :; do
+        remaining="$(redis_cli XLEN "${app}:feed-events")"
+        elapsed=$(( $(date +%s) - started ))
+        if [ "${remaining:-0}" = "0" ] || [ "$elapsed" -ge "$drain_timeout" ]; then
             break
         fi
         sleep 0.5
     done
-    awk -v a="$started" -v b="$(date +%s.%N)" 'BEGIN {printf "%.1f", b - a}'
+    now="$(date +%s.%N)"
+    awk -v a="$started" -v b="$now" -v r="${remaining:-0}" 'BEGIN {printf "%.1f %d", b - a, r}'
+}
+
+# Перед замером очередь должна быть пустой: хвост событий от прошлых прогонов грузит БД (fan-out каждого поста сканирует
+# friendships) и искажает чтение. Не разобралась за $drain_timeout секунд — обрезаем (события теряются, ленты это переживают).
+settle_queue() {
+    local app="$1" result remaining
+    [ "$redis_up" = "1" ] || return 0
+    result="$(queue_wait "$app")"
+    remaining="${result#* }"
+    if [ "$remaining" != "0" ]; then
+        echo "  очередь ${app} не разобрана за ${drain_timeout} с (осталось ${remaining}), обрезается" >&2
+        redis_cli XTRIM "${app}:feed-events" MAXLEN 0 >/dev/null
+    fi
 }
 
 # Прогрев и замер одного уровня: прогрев на том же уровне (соединения, opcache, кэши PostgreSQL), итог не сохраняется.
@@ -170,7 +208,7 @@ measure() {
     # shellcheck disable=SC2086
     k6 "$script" -e BASE_URL="$base_url" -e VUS="$vus" -e DURATION="$warmup" $warmup_args >/dev/null
     # Очередь после прогрева записи дожидаемся до замера: лаг и длина очереди считаются только от самого замера.
-    [ "$mode" != "post" ] || queue_wait "$app" >/dev/null
+    [ "$mode" != "post" ] || settle_queue "$app"
     node_stats "$run" before
     redis_stats "$run" before "$app"
     # shellcheck disable=SC2086
@@ -179,17 +217,27 @@ measure() {
     redis_stats "$run" after "$app"
 }
 
-# Время, за которое воркер разбирает очередь после остановки нагрузки (post-drain.csv): backlog в конце прогона и секунды до нуля.
+# Разбор очереди воркером после остановки нагрузки (post-drain.csv): сколько событий накопилось к концу замера, сколько осталось
+# через drain_seconds и скорость разбора. Не разобралась за DRAIN_TIMEOUT — remaining больше нуля, скорость считается по ней.
 drain_csv="${results}/post-drain.csv"
-echo "run,backlog_at_end,drain_seconds" > "$drain_csv"
+echo "run,backlog_at_end,remaining,drain_seconds,events_per_second" > "$drain_csv"
 
 drain() {
-    local run="$1" app="$2" backlog elapsed
+    local run="$1" app="$2" backlog result seconds remaining rate
     backlog="$(redis_cli XLEN "${app}:feed-events")"
-    elapsed="$(queue_wait "$app")"
-    echo "${run},${backlog},${elapsed}" >> "$drain_csv"
-    echo "  очередь: в конце нагрузки ${backlog} событий, разобрана за ${elapsed} с"
+    result="$(queue_wait "$app")"
+    seconds="${result% *}"
+    remaining="${result#* }"
+    rate="$(awk -v b="$backlog" -v r="$remaining" -v s="$seconds" 'BEGIN {if (s > 0) printf "%.1f", (b - r) / s; else print "0.0"}')"
+    echo "${run},${backlog},${remaining},${seconds},${rate}" >> "$drain_csv"
+    echo "  очередь: к концу нагрузки ${backlog} событий, через ${seconds} с осталось ${remaining}, воркер разбирает ${rate} событий/с"
+    [ "$remaining" = "0" ] || redis_cli XTRIM "${app}:feed-events" MAXLEN 0 >/dev/null
 }
+
+# Хвост очереди от прошлых прогонов не должен греть БД во время замера.
+for app in $apps; do
+    settle_queue "$app"
+done
 
 warmup_args=""
 measure_args=""
@@ -226,7 +274,11 @@ for mode in $modes; do
                 # не вытесняли друг друга (maxmemory Redis).
                 redis_cli FLUSHALL >/dev/null
                 echo "warm ${app}: заполнение кэша (${warm_size} лент)"
-                k6 feed -e BASE_URL="http://127.0.0.1:${ports[$app]}" -e MODE=fill -e WARM_SIZE="$warm_size" >/dev/null
+                filled="$(k6 feed -e BASE_URL="http://127.0.0.1:${ports[$app]}" -e MODE=fill -e WARM_SIZE="$warm_size")"
+                echo "  ${filled}"
+                # Заполнены должны быть все читатели: недозаполненный кэш превращает часть запросов warm в промахи.
+                [[ "$filled" == *"requests=${warm_size} "* && "$filled" == *"failed=0.00%"* ]] \
+                    || { echo "Заполнение кэша не завершилось штатно (ожидалось ${warm_size} запросов без ошибок)." >&2; exit 1; }
                 for vus in $levels; do
                     warmup_args="-e MODE=warm -e WARM_SIZE=${warm_size}"
                     measure_args="$warmup_args"

@@ -5,7 +5,7 @@
 //   warm  — случайные читатели из первых WARM_SIZE: после fill это попадания в кэш (при остановленном Redis — чтение из БД: «без кэша»).
 // В режимах cold и warm VUS виртуальных пользователей шлют запросы без пауз (замкнутая модель, как в get.js);
 // 90% запросов — первая страница (limit 10), остальные — случайная из первых десяти страниц.
-// Параметры через -e: BASE_URL, MODE, VUS, DURATION, WARM_SIZE (5000), START (WARM_SIZE), COUNT (остаток списка), SUMMARY.
+// Параметры через -e: BASE_URL, MODE, VUS, DURATION, WARM_SIZE (2000), START (WARM_SIZE), COUNT (остаток списка), SUMMARY.
 import http from 'k6/http';
 import exec from 'k6/execution';
 import { check } from 'k6';
@@ -22,7 +22,7 @@ const readers = new SharedArray('readers', () =>
 );
 
 const MODE = __ENV.MODE;
-const WARM_SIZE = Number(__ENV.WARM_SIZE || 5000);
+const WARM_SIZE = Number(__ENV.WARM_SIZE || 2000);
 const START = Number(__ENV.START || WARM_SIZE);
 const COUNT = Number(__ENV.COUNT || readers.length - START);
 
@@ -39,7 +39,7 @@ if (MODE === 'cold' && COUNT <= 0) {
 export const options = {
     scenarios: {
         feed: MODE === 'fill'
-            ? { executor: 'shared-iterations', vus: 50, iterations: WARM_SIZE, maxDuration: '15m' }
+            ? { executor: 'shared-iterations', vus: 50, iterations: WARM_SIZE, maxDuration: '2h' }
             : { executor: 'constant-vus', vus: Number(__ENV.VUS), duration: __ENV.DURATION },
     },
     // Тело ответа не нужно: статус проверяется, разбор JSON в k6 исказил бы замер.
