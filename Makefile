@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure seed-posts-file seed-feed reset-feed
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure seed-posts-file seed-feed reset-feed bench-feed-readers bench-feed bench-fanout
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -68,6 +68,15 @@ bench-get-ids: ## Выгрузить случайные id анкет для з�
 
 bench-read: ## Замер чтения (get и search, k6) для ДЗ «Репликация»: make bench-read PHASE=baseline|replicas [SCENARIOS="get search"] [LEVELS="1 10 100 1000"]
 	PHASE=$(PHASE) ./social-network-docker/bench/read.sh
+
+bench-feed-readers: ## Выгрузить читателей ленты с токенами для нагрузки (feed-readers.csv, нужна заполненная лента): make bench-feed-readers [READERS=20000]
+	./social-network-docker/bench/feed-readers.sh
+
+bench-feed: ## Замер ленты постов (k6): make bench-feed PHASE=имя [MODES="nocache cold warm post"] [LEVELS="1 10 50 100"] [DURATION=30s] (после make bench-up, make seed-feed и make bench-feed-readers)
+	PHASE=$(PHASE) ./social-network-docker/bench/feed.sh
+
+bench-fanout: ## Задержка fan-out: от создания поста до появления в ленте подписчика, малый/средний автор и «знаменитость»: make bench-fanout [PHASE=имя] [ITERATIONS=20]
+	./social-network-docker/bench/fanout-latency.sh
 
 bench-plot: ## Графики и таблицы по итогам bench-search в docs/homework-indexes/
 	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
