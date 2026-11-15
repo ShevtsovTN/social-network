@@ -5,10 +5,11 @@ declare(strict_types=1);
 /**
  * Composition root: единственное место, где создаются объекты и связываются зависимости.
  * Автовайринга нет, всё собирается руками. Возвращает готовые к использованию объекты,
- * ключ массива это имя класса.
+ * ключ массива это имя класса (кроме воркера ленты, там фабрика).
  */
 
 use SocialNetwork\Core\Application\AddFriend\AddFriendHandler;
+use SocialNetwork\Core\Application\ApplyFeedEvent\ApplyFeedEventHandler;
 use SocialNetwork\Core\Application\Authenticate\AuthenticateHandler;
 use SocialNetwork\Core\Application\CreatePost\CreatePostHandler;
 use SocialNetwork\Core\Application\DeletePost\DeletePostHandler;
@@ -16,6 +17,7 @@ use SocialNetwork\Core\Application\GetFeed\GetFeedHandler;
 use SocialNetwork\Core\Application\GetPost\GetPostHandler;
 use SocialNetwork\Core\Application\GetUser\GetUserHandler;
 use SocialNetwork\Core\Application\Login\LoginHandler;
+use SocialNetwork\Core\Application\ProcessNextFeedEvent\ProcessNextFeedEventHandler;
 use SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler;
 use SocialNetwork\Core\Application\RemoveFriend\RemoveFriendHandler;
 use SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler;
@@ -27,6 +29,7 @@ use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoPostRepository;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoUserRepository;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PrimaryFallbackUserRepository;
 use SocialNetwork\NativeApp\Infrastructure\Queue\FeedEventSerializer;
+use SocialNetwork\NativeApp\Infrastructure\Queue\RedisFeedEventConsumer;
 use SocialNetwork\NativeApp\Infrastructure\Queue\RedisFeedEventPublisher;
 use SocialNetwork\NativeApp\Infrastructure\Redis\RedisConnection;
 use SocialNetwork\NativeApp\Infrastructure\Redis\RedisFeedCache;
@@ -120,6 +123,7 @@ $clock = $once(static fn (): SystemClock => new SystemClock());
 $primaryPosts = $once(static fn (): PdoPostRepository => new PdoPostRepository($primaryConnection()));
 $replicaPosts = $once(static fn (): PdoPostRepository => new PdoPostRepository($replicaConnection()));
 $primaryFriendships = $once(static fn (): PdoFriendshipRepository => new PdoFriendshipRepository($primaryConnection()));
+$primaryFeedSource = $once(static fn (): PdoFeedSource => new PdoFeedSource($primaryConnection()));
 $replicaFeedSource = $once(static fn (): PdoFeedSource => new PdoFeedSource($replicaConnection()));
 $postIdGenerator = $once(static fn (): RandomPostIdGenerator => new RandomPostIdGenerator());
 
@@ -142,6 +146,35 @@ $feedEventPublisher = $once(static fn (): RedisFeedEventPublisher => new RedisFe
     $redisConnection(),
     $redisKeyspace(),
     new FeedEventSerializer(),
+));
+
+// Воркер fan-out (bin/feed-worker.php): тот же код приложения отдельным процессом. Данные берёт с primary:
+// реплика может отставать, а свежий пост или правка не должны теряться. Подключение к Redis обычное, не постоянное,
+// с таймаутом чтения больше блокирующего ожидания XREADGROUP (5 с), иначе phpredis оборвёт соединение.
+// Зависшее событие (воркер упал на середине) другой экземпляр забирает через 30 с.
+$workerRedisConnection = $once(static fn (): RedisConnection => new RedisConnection(
+    $requireEnv('REDIS_HOST'),
+    (int) $requireEnv('REDIS_PORT'),
+    $requireEnv('REDIS_PASSWORD'),
+    false,
+    1.0,
+    10.0,
+));
+$feedWorker = $once(static fn (): ProcessNextFeedEventHandler => new ProcessNextFeedEventHandler(
+    new RedisFeedEventConsumer(
+        $workerRedisConnection(),
+        $redisKeyspace(),
+        new FeedEventSerializer(),
+        (string) gethostname(),
+        30_000,
+    ),
+    new ApplyFeedEventHandler(
+        $primaryPosts(),
+        $primaryFriendships(),
+        $primaryFeedSource(),
+        new RedisFeedCache($workerRedisConnection(), $redisKeyspace(), $feedTtlSeconds),
+        new RedisPostCache($workerRedisConnection(), $redisKeyspace(), $postTtlSeconds),
+    ),
 ));
 $requestAuthenticator = $once(static fn (): RequestAuthenticator => new RequestAuthenticator(
     new AuthenticateHandler($tokenService()),
@@ -196,4 +229,7 @@ $router = new Router([
 return [
     Application::class => new Application($router, $errorHandler),
     ErrorHandler::class => $errorHandler,
+    // Единственное исключение из «готовых объектов»: фабрика. Воркеру нужны все зависимости сразу,
+    // а HTTP-запросы не должны их создавать.
+    ProcessNextFeedEventHandler::class => $feedWorker,
 ];

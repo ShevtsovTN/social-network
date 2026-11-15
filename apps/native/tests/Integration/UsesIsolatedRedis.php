@@ -36,6 +36,14 @@ trait UsesIsolatedRedis
 
     protected function tearDown(): void
     {
+        $this->cleanUpRedis();
+    }
+
+    /**
+     * Удаляет ключи этого теста. Тест со своим tearDown вызывает метод сам.
+     */
+    protected function cleanUpRedis(): void
+    {
         if ($this->isolatedKeyspace === null) {
             return;
         }

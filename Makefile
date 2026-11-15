@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -109,6 +109,12 @@ redis-cli: ## Консоль Redis внутри контейнера: make redis
 
 redis-flush: ## Сбросить весь Redis (ленты, тела постов, стримы): холодный кэш для замеров; ленты пересоберутся из БД
 	$(COMPOSE) exec redis redis-cli FLUSHALL
+
+worker-restart: ## Перезапустить воркеры ленты (после правок кода в dev воркер держит старый код в памяти)
+	$(COMPOSE) restart worker-native
+
+worker-logs: ## Логи воркеров ленты
+	$(COMPOSE) logs -f --tail=100 worker-native
 
 reset-db: ## Остановить стек и удалить данные БД (миграции применятся заново при следующем up)
 	$(COMPOSE) down -v

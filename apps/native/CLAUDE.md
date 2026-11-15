@@ -4,7 +4,8 @@
 Presentation и Infrastructure поверх `core`. Бизнес-логики здесь нет.
 
 ## Состав
-- `public/index.php`: единственная точка входа.
+- `public/index.php`: единственная точка входа HTTP. `bin/feed-worker.php`: воркер ленты (цикл вокруг use case `ProcessNextFeedEvent`,
+  при ошибке инфраструктуры выходит с кодом 1, перезапуск делает docker compose).
 - `config/`: composition root, ручная сборка зависимостей (без autowiring).
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
   при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`.

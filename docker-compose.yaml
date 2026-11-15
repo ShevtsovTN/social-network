@@ -292,6 +292,25 @@ services:
       <<: *php-env
       REDIS_KEY_PREFIX: native
 
+  # Воркер ленты (ДЗ «Лента постов»): тот же образ и код, другой процесс. Читает события из Redis Streams и раскладывает
+  # их по лентам. Не HTTP-сервис и не отдельное приложение. При любой ошибке инфраструктуры воркер завершается с кодом 1
+  # и перезапускается; init: true нужен, чтобы PHP как PID 1 получал SIGTERM при docker stop.
+  worker-native:
+    <<: *php-app
+    working_dir: /app/apps/native
+    command: ["php", "bin/feed-worker.php"]
+    init: true
+    restart: unless-stopped
+    environment:
+      <<: *php-env
+      REDIS_KEY_PREFIX: native
+    # Воркер не считает argon2id, поэтому ему хватает меньше памяти, чем php-fpm; лимиты одинаковы у обоих воркеров приложений.
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+
   nginx-native:
     image: social-network-nginx-native
     build:

@@ -14,6 +14,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # Воркер читает код при старте и держит его в памяти: после правок перезапустите его (make worker-restart).
+  worker-native:
+    volumes:
+      - .:/app
+
   php-symfony:
     volumes:
       - .:/app
