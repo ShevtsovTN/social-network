@@ -7,7 +7,7 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `public/index.php`: единственная точка входа.
 - `config/`: composition root, ручная сборка зависимостей (без autowiring).
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
-  при промахе), фабрика PDO-подключения.
+  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`.
 - `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
 - `src/Presentation/Http/`: `Application` (вход слоя: Request → JsonResponse) и подкаталоги по ответственности:
   `Request/` (запрос, JSON-тело, параметры строки запроса, `MalformedRequest`), `Response/` (`JsonResponse`, `UserPayload`),
@@ -25,7 +25,11 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
   `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
   не действуют (за него отвечает `dns_opt` в compose).
-- Только prepared statements с именованными параметрами, без ORM.
+- Только prepared statements с именованными параметрами, без ORM. Запросы статические: даже список id передаётся одним
+  параметром-массивом (`ANY(CAST(:ids AS uuid[]))`), а не собирается из плейсхолдеров.
+- Бизнес-логики в `native` нет: проверка владельца поста, границы и значения по умолчанию страницы ленты, вместимость ленты (1000),
+  правила дружбы и текста поста живут в `core`. Здесь только SQL, Redis-команды, разбор HTTP и маппинг ошибок.
+  Константы берутся из `core` (например, `FeedLimits::CAPACITY`), а не дублируются.
 - Параметры argon2id и алгоритм токенов идентичны Symfony-версии.
 - Контейнер собирается вручную в одном месте.
 - Сборка ленивая, как в Symfony: сервисы Infrastructure создаются через `$once(...)` при первом обращении,

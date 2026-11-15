@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a6ba4912758e810c422b3c52fca6cfb2",
+    "content-hash": "298351ab9860a6cb6c382fd85bd43686",
     "packages": [
         {
             "name": "social-network/core",
@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/core",
-                "reference": "99d9142dc6ee6251748ca4cf169bdd3849241815"
+                "reference": "c4c25021b0bed00f9066a3e98c6d720644176973"
             },
             "require": {
                 "php": "^8.4"
@@ -1755,7 +1755,8 @@
     "platform": {
         "php": "^8.4",
         "ext-pdo": "*",
-        "ext-pdo_pgsql": "*"
+        "ext-pdo_pgsql": "*",
+        "ext-redis": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"
