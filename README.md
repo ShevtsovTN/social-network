@@ -28,7 +28,7 @@ docs/                    openapi.json, Postman-коллекция, отчёты 
 **Требования**
 
 - Docker с Compose v2 (`docker compose version`) и make.
-- Свободные порты 8080, 8081, 8082, 5432 (primary), 5433 и 5434 (реплики), 8404 (статистика HAProxy) (меняются в `.env`, см. ниже).
+- Свободные порты 8080, 8081, 8082, 5432 (primary), 5433 и 5434 (реплики), 8404 (статистика HAProxy), 6379 (Redis) (меняются в `.env`, см. ниже).
   Для мониторинга ещё 3000 (Grafana) и 9090 (Prometheus).
 
 **Первый запуск** (порядок важен: зависимости ставятся до старта приложений, потому что код монтируется в контейнеры вместе с `vendor`)
@@ -121,6 +121,19 @@ make repl-rebuild                              # кластер PostgreSQL с н
 - Эксперимент `make repl-failover` убивает primary и разрушает кластер: после него нужен `make repl-rebuild`. Данные БД удаляются.
 - `DB_READ_HOST=postgres make bench-up` возвращает чтение на primary (baseline «одна нода»).
 - Если `.env` создан раньше, добавьте в него новые переменные из `.env.example`: пароль репликации, `MONITORING_*`, `GRAFANA_ADMIN_PASSWORD`, порты.
+
+## Redis (лента постов)
+
+Для ДЗ «Лента постов» (ветка `homework-feed`) в стек входит сервис `redis`: кэш ленты друзей и очередь событий fan-out (Redis Streams).
+Redis не источник истины и работает без персистентности: после потери данных ленты пересобираются из PostgreSQL.
+Настройки в `social-network-docker/redis/redis.conf`, пароль и лимиты в `.env` (`REDIS_PASSWORD`, `REDIS_CPUS`, `REDIS_MEMORY`,
+`REDIS_MAXMEMORY`). Клиент в PHP-образе — расширение phpredis. Каждое приложение работает со своими ключами и стримом
+(`REDIS_KEY_PREFIX`: `native` или `symfony`).
+
+```
+make redis-cli c="INFO memory"   # консоль Redis
+make redis-flush                 # холодный кэш (например, перед замером)
+```
 
 ## Тесты
 

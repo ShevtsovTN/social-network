@@ -21,6 +21,10 @@
   экспериментом, потому что прежний primary после аварии потерян). Эксперимент разрушает primary и тома БД.
 - `netem/`: образ с tc (iproute2) для netem; запускается рядом с узлом (`--net container:...`, `NET_ADMIN`), только для экспериментов.
 - `haproxy/`: `haproxy.cfg` для балансировки чтения между репликами (tcp, roundrobin, `pgsql-check`; статистика и `/metrics` на :8404).
+- `redis/`: `redis.conf` (ДЗ «Лента постов»): без персистентности (`save ""`, `appendonly no`), `maxmemory-policy volatile-lru`.
+  `maxmemory` и пароль задаются в compose (`REDIS_MAXMEMORY`, `REDIS_PASSWORD`), лимиты контейнера `REDIS_CPUS`/`REDIS_MEMORY`.
+  Один сервис `redis` на оба приложения; ключи, стрим и consumer group разделяет `REDIS_KEY_PREFIX` (`native`, `symfony`).
+  `make redis-cli`, `make redis-flush`. Воркеры fan-out добавляются вместе с кодом приложений.
 - `monitoring/`: `prometheus.yml` и провижининг Grafana (datasource, дашборды в `grafana/dashboards/`). Сервисы
   (Prometheus, postgres_exporter ×3, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
   в обычный `make up` не входят. Экспортёр ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`).
@@ -45,6 +49,8 @@
 - У php-контейнеров короткие таймауты резолвера (`dns_opt: timeout:1, attempts:1`): имя убитого контейнера Docker
   разрешает 5 секунд, libpq пробует дважды, и воркеры php-fpm висели бы 10 секунд на каждой попытке подключения
   к мёртвому primary (чтение через то же приложение вставало в очередь). Имена живых контейнеров разрешаются мгновенно.
+- Redis не источник истины: данные ключей с TTL вытесняются, стрим без TTL ограничивается `MAXLEN ~` на стороне приложения.
+  Клиент phpredis ставится в `base` образа PHP (`PHPREDIS_VERSION`), версия расширения закреплена.
 - Версии базовых образов зафиксированы (без `latest`).
 - Nginx не получает код приложений. Он только проксирует в php-fpm.
 - Контейнеры не запускаются от root, если это не требуется для работы

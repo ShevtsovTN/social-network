@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -103,6 +103,12 @@ compare: ## Сверка ответов native и symfony на одинаков�
 
 seed: ## Заполнить пустую таблицу users миллионом анкет из db/seed/people.v2.csv (стек должен быть поднят)
 	./db/seed/seed.sh
+
+redis-cli: ## Консоль Redis внутри контейнера: make redis-cli c="INFO memory"
+	$(COMPOSE) exec redis redis-cli $(c)
+
+redis-flush: ## Сбросить весь Redis (ленты, тела постов, стримы): холодный кэш для замеров; ленты пересоберутся из БД
+	$(COMPOSE) exec redis redis-cli FLUSHALL
 
 reset-db: ## Остановить стек и удалить данные БД (миграции применятся заново при следующем up)
 	$(COMPOSE) down -v
