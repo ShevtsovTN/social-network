@@ -9,7 +9,8 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `src/Kernel.php`: ядро на `MicroKernelTrait`. Кэш и логи пишет в `APP_VAR_DIR`.
 - `config/`: `bundles.php`, `services.yaml`, `routes.yaml` (атрибуты из `Presentation/Http`), `packages/`.
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
-  при промахе), фабрика PDO-подключения.
+  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`
+  (копии классов `apps/native`, отличается только namespace: приложения не зависят друг от друга).
 - `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
 - `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `QueryParameters`, `MalformedRequest`),
   `Response/` (`ApiJsonResponse`, `UserPayload`), `Routing/` (`StrictRoutingListener`), `Error/` (`ApiExceptionListener`).
@@ -25,7 +26,10 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
   `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
   не действуют (за него отвечает `dns_opt` в compose).
-- Без Doctrine и любого ORM. Только PDO с prepared statements.
+- Без Doctrine и любого ORM. Только PDO с prepared statements. Запросы статические: даже список id передаётся одним
+  параметром-массивом (`ANY(CAST(:ids AS uuid[]))`).
+- Бизнес-логики в `symfony` нет: проверка владельца поста, границы и значения по умолчанию страницы ленты, вместимость ленты (1000),
+  правила дружбы и текста поста живут в `core`. Здесь только SQL, Redis-команды, разбор HTTP и маппинг ошибок.
 - Infrastructure реализует порты из `core` и не содержит бизнес-правил.
   Реализации по подходу эквивалентны `apps/native`.
 - Сервисы `core` и свои реализации портов регистрируем в `services.yaml` явно,
