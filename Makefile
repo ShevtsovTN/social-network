@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure seed-posts-file seed-feed reset-feed
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -118,6 +118,16 @@ worker-restart: ## Перезапустить воркеры ленты (пос�
 
 worker-logs: ## Логи воркеров ленты
 	$(COMPOSE) logs -f --tail=100 worker-native worker-symfony
+
+seed-posts-file: ## Скачать posts.txt (тексты постов из ДЗ OTUS, около 6 МБ) в db/seed/ для make seed-feed (в git не хранится)
+	curl -fsSL -o db/seed/posts.txt https://raw.githubusercontent.com/OtusTeam/highload/master/homework/posts.txt
+
+seed-feed: ## Заполнить пустые friendships и posts (100 тыс. активных, около 2 млн друзей, 1 млн постов); нужны make seed и db/seed/posts.txt
+	./db/seed/seed-feed.sh
+
+reset-feed: ## Очистить friendships и posts и сбросить Redis (анкеты users остаются)
+	$(COMPOSE) exec -T postgres sh -c 'psql -X -q -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "TRUNCATE friendships, posts"'
+	$(COMPOSE) exec -T redis redis-cli FLUSHALL
 
 reset-db: ## Остановить стек и удалить данные БД (миграции применятся заново при следующем up)
 	$(COMPOSE) down -v

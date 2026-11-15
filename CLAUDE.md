@@ -16,7 +16,8 @@
 - `social-network-docker/`: Dockerfile'ы и конфиги php-fpm, nginx, postgres.
   `docker-compose.yaml` и `.env` лежат в корне репозитория.
 - `db/migrations/`: общая SQL-схема для обоих приложений.
-- `db/seed/`: генерация миллиона анкет из `people.v2.csv` (`make seed`, файл CSV в git не хранится).
+- `db/seed/`: генерация миллиона анкет из `people.v2.csv` (`make seed`, файл CSV в git не хранится) и данных ленты (`make seed-feed`:
+  друзья и посты у 100 тысяч активных пользователей, тексты из `posts.txt`, `make seed-posts-file`, файл в git не хранится).
 - Реализации портов (PDO-репозиторий, хешер, токены) пишутся в каждом приложении
   отдельно, но обязаны проходить одни и те же contract-тесты из `core/tests/Contract`.
 - Оба приложения дают идентичный HTTP-контракт на одной БД
