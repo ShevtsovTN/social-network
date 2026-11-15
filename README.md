@@ -122,18 +122,69 @@ make repl-rebuild                              # кластер PostgreSQL с н
 - `DB_READ_HOST=postgres make bench-up` возвращает чтение на primary (baseline «одна нода»).
 - Если `.env` создан раньше, добавьте в него новые переменные из `.env.example`: пароль репликации, `MONITORING_*`, `GRAFANA_ADMIN_PASSWORD`, порты.
 
-## Redis (лента постов)
+## Лента постов (ДЗ «Лента постов», ветка `homework-feed`)
 
-Для ДЗ «Лента постов» (ветка `homework-feed`) в стек входит сервис `redis`: кэш ленты друзей и очередь событий fan-out (Redis Streams).
-Redis не источник истины и работает без персистентности: после потери данных ленты пересобираются из PostgreSQL.
-Настройки в `social-network-docker/redis/redis.conf`, пароль и лимиты в `.env` (`REDIS_PASSWORD`, `REDIS_CPUS`, `REDIS_MEMORY`,
-`REDIS_MAXMEMORY`). Клиент в PHP-образе — расширение phpredis. Каждое приложение работает со своими ключами и стримом
-(`REDIS_KEY_PREFIX`: `native` или `symfony`).
+Друзья (`/friend/set`, `/friend/delete`), посты (`/post/create|update|delete|get`) и лента постов друзей (`/post/feed`).
+Контракт и его отступления от спецификации OTUS описаны в `docs/openapi.json`.
 
-```
-make redis-cli c="INFO memory"   # консоль Redis
-make redis-flush                 # холодный кэш (например, перед замером)
-```
+**Статус работы** (обновляется по мере выполнения шагов):
+
+- Готово: контракт и Postman-папки, миграция `003` (таблицы `friendships` и `posts`), сервис Redis и phpredis в PHP-образе.
+- Не готово: use case'ы и порты в `core`, реализация в native и symfony, воркер fan-out, сид друзей и постов, замеры и отчёт
+  `docs/homework-feed/`. Пока методы друзей, постов и ленты не реализованы, и папки «Second user», «Posts», «Friends» и «Feed»
+  в Postman-коллекции не проходят.
+
+**Как устроено**
+
+- PostgreSQL остаётся источником истины. Дружба односторонняя: лента строится по тем, кого пользователь добавил сам.
+- Redis хранит ленту (ZSET из последних 1000 id) и тела постов с TTL. Он не источник истины и работает без персистентности:
+  после потери данных ленты пересобираются из PostgreSQL. Ленты миллиона пользователей в памяти не помещаются, поэтому событие
+  о новом посте пишется только в уже существующие ленты, остальные собираются лениво при чтении.
+- Событие о новом посте уходит в Redis Streams, воркер раскладывает его по лентам асинхронно, поэтому лента итогово согласована.
+- Настройки Redis: `social-network-docker/redis/redis.conf`, пароль и лимиты в `.env` (`REDIS_PASSWORD`, `REDIS_CPUS`,
+  `REDIS_MEMORY`, `REDIS_MAXMEMORY`). Каждое приложение работает со своими ключами и стримом (`REDIS_KEY_PREFIX`: `native` или `symfony`).
+
+**Запуск для проверки**
+
+1. Поднять стек (шаги «Первый запуск» выше): `make init && make install && make up`. Redis стартует вместе с остальными сервисами.
+   Если `.env` создан раньше, добавьте в него `REDIS_*` из `.env.example`.
+2. Убедиться, что в БД есть таблицы ДЗ. Миграции применяются только на пустом томе, поэтому на БД, созданной до `003`,
+   примените её вручную (реплики получат таблицы по репликации, данные сохраняются):
+
+   ```
+   docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 --single-transaction' \
+     < db/migrations/003_create_friendships_and_posts.sql
+   ```
+
+   Проверка: `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'` должна показать
+   `users`, `friendships` и `posts`. Повторный запуск `003` завершится ошибкой «relation already exists», это нормально.
+   Чистая БД с нуля: `make reset-db && make up` (после этого миллион анкет заливается заново, `make seed`).
+3. Проверить Redis: `make redis-cli c="PING"` отвечает `PONG`, `make ps` показывает `redis` как healthy.
+4. Прогнать Postman-коллекцию против обоих приложений (раздел «Postman-коллекция» ниже): папки «Second user», «Posts»,
+   «Friends» и «Feed» проверяют весь контракт ДЗ, включая итоговую согласованность ленты (запросы ленты опрашивают API до 10 секунд).
+5. Ручной сценарий (порт 8081 для native, 8082 для Symfony; `Authorization: Bearer <token>` берётся из `/login`):
+
+   ```
+   # два пользователя: зарегистрировать и войти (как в разделе «Проверка API»), получить <idA>, <tokenA>, <idB>, <tokenB>
+
+   # B публикует пост, в ответе id поста
+   curl -s -H "Authorization: Bearer <tokenB>" -H 'Content-Type: application/json' http://localhost:8081/post/create -d '{"text": "Первый пост B"}'
+
+   # A добавляет B в друзья (204)
+   curl -si -X PUT -H "Authorization: Bearer <tokenA>" http://localhost:8081/friend/set/<idB>
+
+   # лента A: пост B появляется (может потребоваться пара секунд, лента итогово согласована)
+   curl -s -H "Authorization: Bearer <tokenA>" 'http://localhost:8081/post/feed?offset=0&limit=10'
+
+   # пост по id (без авторизации), изменение и удаление (PUT, 204), удаление друга
+   curl -s http://localhost:8081/post/get/<postId>
+   curl -si -X PUT -H "Authorization: Bearer <tokenB>" -H 'Content-Type: application/json' http://localhost:8081/post/update -d '{"id": "<postId>", "text": "Изменено"}'
+   curl -si -X PUT -H "Authorization: Bearer <tokenB>" http://localhost:8081/post/delete/<postId>
+   curl -si -X PUT -H "Authorization: Bearer <tokenA>" http://localhost:8081/friend/delete/<idB>
+   ```
+
+6. Посмотреть, что лежит в Redis: `make redis-cli c="KEYS '*'"` (на учебных объёмах), `make redis-cli c="INFO memory"`.
+   Сбросить кэш (холодный старт, например перед замером): `make redis-flush`.
 
 ## Тесты
 
