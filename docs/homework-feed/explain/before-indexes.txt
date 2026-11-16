@@ -1,0 +1,139 @@
+== Данные ==
+читатель 0012325a-6c9f-4d6e-9289-e4c3c854bde6, 20 друзей
+обычный автор 0029713d-2bfd-414e-a586-438f15f2066e, 20 подписчиков, постов 6
+«знаменитость» 1418cfc7-0cb2-40ce-ab8e-dc04c41d03b1, подписчиков 32011, постов 494
+ server_version | shared_buffers | work_mem 
+----------------+----------------+----------
+ 17.10          | 256MB          | 4MB
+(1 row)
+
+
+== 1. followerIdsOf: подписчики обычного автора (fan-out нового поста), LIMIT 500 ==
+                                                               QUERY PLAN                                                               
+----------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=27370.52..27374.49 rows=34 width=16) (actual time=188.574..192.039 rows=20 loops=1)
+   Buffers: shared hit=936 read=15364
+   ->  Gather Merge  (cost=27370.52..27374.49 rows=34 width=16) (actual time=188.572..192.036 rows=20 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=936 read=15364
+         ->  Sort  (cost=26370.50..26370.54 rows=17 width=16) (actual time=130.315..130.316 rows=7 loops=3)
+               Sort Key: user_id
+               Sort Method: quicksort  Memory: 25kB
+               Buffers: shared hit=936 read=15364
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Parallel Seq Scan on friendships  (cost=0.00..26370.15 rows=17 width=16) (actual time=3.336..130.159 rows=7 loops=3)
+                     Filter: (friend_id = '0029713d-2bfd-414e-a586-438f15f2066e'::uuid)
+                     Rows Removed by Filter: 649091
+                     Buffers: shared hit=864 read=15364
+ Planning Time: 0.079 ms
+ Execution Time: 192.057 ms
+(18 rows)
+
+
+== 2. followerIdsOf: первая страница подписчиков «знаменитости», LIMIT 500 ==
+                                                                     QUERY PLAN                                                                     
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..991.31 rows=500 width=16) (actual time=0.007..0.340 rows=500 loops=1)
+   Buffers: shared hit=183
+   ->  Index Only Scan using friendships_pkey on friendships  (cost=0.43..62130.64 rows=31351 width=16) (actual time=0.007..0.316 rows=500 loops=1)
+         Index Cond: (friend_id = '1418cfc7-0cb2-40ce-ab8e-dc04c41d03b1'::uuid)
+         Heap Fetches: 0
+         Buffers: shared hit=183
+ Planning Time: 0.051 ms
+ Execution Time: 0.363 ms
+(8 rows)
+
+
+== 3. latestFromFriends: сборка ленты читателя при промахе кэша, LIMIT 1000 ==
+                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=113229.53..113282.04 rows=450 width=24) (actual time=788.066..794.579 rows=703 loops=1)
+   Buffers: shared hit=15094 read=91843
+   ->  Gather Merge  (cost=113229.53..113282.04 rows=450 width=24) (actual time=785.113..791.592 rows=703 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=15094 read=91843
+         ->  Sort  (cost=112229.51..112230.07 rows=225 width=24) (actual time=730.489..730.511 rows=234 loops=3)
+               Sort Key: p.created_at DESC, p.id DESC
+               Sort Method: quicksort  Memory: 41kB
+               Buffers: shared hit=15094 read=91843
+               Worker 0:  Sort Method: quicksort  Memory: 40kB
+               Worker 1:  Sort Method: quicksort  Memory: 41kB
+               ->  Hash Join  (cost=5.27..112220.72 rows=225 width=24) (actual time=3.009..730.344 rows=234 loops=3)
+                     Hash Cond: (p.author_id = f.friend_id)
+                     Buffers: shared hit=15062 read=91843
+                     ->  Parallel Seq Scan on posts p  (cost=0.00..111095.83 rows=426483 width=40) (actual time=0.022..687.537 rows=361023 loops=3)
+                           Buffers: shared hit=14988 read=91843
+                     ->  Hash  (cost=4.92..4.92 rows=28 width=16) (actual time=2.391..2.391 rows=20 loops=3)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=14
+                           ->  Index Only Scan using friendships_pkey on friendships f  (cost=0.43..4.92 rows=28 width=16) (actual time=2.381..2.383 rows=20 loops=3)
+                                 Index Cond: (user_id = '0012325a-6c9f-4d6e-9289-e4c3c854bde6'::uuid)
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=14
+ Planning Time: 0.150 ms
+ JIT:
+   Functions: 31
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 1.266 ms (Deform 0.386 ms), Inlining 0.000 ms, Optimization 0.610 ms, Emission 9.433 ms, Total 11.310 ms
+ Execution Time: 794.955 ms
+(30 rows)
+
+
+== 4. latestByAuthor: backfill после /friend/set (обычный автор), LIMIT 1000 ==
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=113162.12..113163.29 rows=10 width=24) (actual time=609.297..615.065 rows=6 loops=1)
+   Buffers: shared hit=15270 read=91651
+   ->  Gather Merge  (cost=113162.12..113163.29 rows=10 width=24) (actual time=607.357..613.124 rows=6 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=15270 read=91651
+         ->  Sort  (cost=112162.10..112162.11 rows=5 width=24) (actual time=548.222..548.223 rows=2 loops=3)
+               Sort Key: created_at DESC, id DESC
+               Sort Method: quicksort  Memory: 25kB
+               Buffers: shared hit=15270 read=91651
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Parallel Seq Scan on posts  (cost=0.00..112162.04 rows=5 width=24) (actual time=140.197..548.143 rows=2 loops=3)
+                     Filter: (author_id = '0029713d-2bfd-414e-a586-438f15f2066e'::uuid)
+                     Rows Removed by Filter: 361021
+                     Buffers: shared hit=15180 read=91651
+ Planning Time: 0.067 ms
+ JIT:
+   Functions: 13
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 0.819 ms (Deform 0.315 ms), Inlining 0.000 ms, Optimization 0.455 ms, Emission 6.663 ms, Total 7.936 ms
+ Execution Time: 615.291 ms
+(22 rows)
+
+
+== 5. latestByAuthor: backfill «знаменитости», LIMIT 1000 ==
+                                                              QUERY PLAN                                                               
+---------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=113168.36..113208.03 rows=340 width=24) (actual time=606.477..612.246 rows=494 loops=1)
+   Buffers: shared hit=15462 read=91459
+   ->  Gather Merge  (cost=113168.36..113208.03 rows=340 width=24) (actual time=604.592..610.335 rows=494 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=15462 read=91459
+         ->  Sort  (cost=112168.34..112168.76 rows=170 width=24) (actual time=595.433..595.447 rows=165 loops=3)
+               Sort Key: created_at DESC, id DESC
+               Sort Method: quicksort  Memory: 38kB
+               Buffers: shared hit=15462 read=91459
+               Worker 0:  Sort Method: quicksort  Memory: 35kB
+               Worker 1:  Sort Method: quicksort  Memory: 36kB
+               ->  Parallel Seq Scan on posts  (cost=0.00..112162.04 rows=170 width=24) (actual time=54.315..595.270 rows=165 loops=3)
+                     Filter: (author_id = '1418cfc7-0cb2-40ce-ab8e-dc04c41d03b1'::uuid)
+                     Rows Removed by Filter: 360858
+                     Buffers: shared hit=15372 read=91459
+ Planning Time: 0.067 ms
+ JIT:
+   Functions: 13
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 0.698 ms (Deform 0.246 ms), Inlining 0.000 ms, Optimization 0.398 ms, Emission 163.351 ms, Total 164.446 ms
+ Execution Time: 612.510 ms
+(22 rows)
+

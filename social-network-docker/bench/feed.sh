@@ -5,7 +5,7 @@
 #   PHASE     обязателен: имя фазы замера (например, before-indexes); итоги кладутся в
 #             docs/homework-feed/results/<PHASE>/<режим>-<приложение>-c<N>.json
 #   MODES     "nocache cold warm post":
-#             nocache — Redis остановлен, лента собирается из БД на каждый запрос (чтение с реплики);
+#             nocache — Redis недоступен (заблокирован сменой пароля), лента собирается из БД на каждый запрос (чтение с реплики);
 #             cold    — кэш сброшен, каждый запрос от нового читателя: промах, сборка из БД и запись в Redis;
 #             warm    — лента читателя уже в Redis: попадание в кэш;
 #             post    — POST /post/create: запись и асинхронный fan-out; после прогона замеряется время опустошения очереди
@@ -63,15 +63,29 @@ redis_wait() {
     echo "Redis не поднялся за 60 с." >&2
     return 1
 }
-redis_stop() { compose stop redis >/dev/null; redis_up=0; }
+# «Недоступный» Redis в режиме nocache: контейнер не останавливаем. У остановленного контейнера имя не разрешается, а у php
+# короткий таймаут резолвера (dns_opt timeout:1), так что каждый запрос ждал бы около секунды ещё до обращения к БД, и замер
+# показывал бы таймаут DNS, а не сборку ленты. Вместо этого меняем пароль и обрываем клиентов: подключение к Redis отвечает
+# отказом аутентификации сразу, кэш превращает его в CacheUnavailable, и лента читается из БД с реплики.
+locked_password="bench-locked-$$"
+redis_stop() {
+    compose exec -T redis redis-cli CONFIG SET requirepass "$locked_password" >/dev/null
+    compose exec -T redis redis-cli CLIENT KILL TYPE normal >/dev/null 2>&1 || true
+    redis_up=0
+}
+redis_unlock() {
+    # Контейнер знает исходный пароль (REDISCLI_AUTH); под заблокированным паролем входим переопределённым значением.
+    compose exec -T -e LOCKED="$locked_password" redis sh -c \
+        'REDISCLI_AUTH="$LOCKED" redis-cli CONFIG SET requirepass "$REDISCLI_AUTH" >/dev/null 2>&1 || true' || true
+}
 redis_start() {
-    compose start redis >/dev/null
+    redis_unlock
     redis_wait
     redis_up=1
-    # Воркеры падают без Redis и перезапускаются docker'ом: даём им подняться.
+    # Воркеры падают без доступа к Redis и перезапускаются docker'ом: даём им подняться.
     sleep 15
 }
-trap '[ "$redis_up" = "1" ] || compose start redis >/dev/null 2>&1 || true' EXIT
+trap '[ "$redis_up" = "1" ] || redis_unlock' EXIT
 
 # Лаг репликации перед замером должен быть нулевым: иначе чтение с реплик считается на отстающих данных.
 lag="$(compose exec -T postgres sh -c 'psql -X -tA -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT coalesce(max(pg_current_wal_lsn() - replay_lsn), 0) FROM pg_stat_replication"' | tr -d '\r')"
@@ -113,7 +127,7 @@ stats_log="${results}/docker-stats.log"
     done >> "$stats_log" 2>&1
 ) &
 sampler_pid=$!
-trap 'kill "$sampler_pid" 2>/dev/null || true; [ "$redis_up" = "1" ] || compose start redis >/dev/null 2>&1 || true' EXIT
+trap 'kill "$sampler_pid" 2>/dev/null || true; [ "$redis_up" = "1" ] || redis_unlock' EXIT
 
 # Счётчики узлов БД до и после каждого замера (node-stats.csv): транзакции и возвращённые строки из pg_stat_database
 # на каждом узле и число соединений haproxy с репликами. Разность «после − до» показывает, какой узел обслужил нагрузку.
@@ -245,7 +259,7 @@ measure_args=""
 for mode in $modes; do
     case "$mode" in
         nocache)
-            # Redis остановлен: приложение видит CacheUnavailable и собирает ленту из БД на каждый запрос.
+            # Redis заблокирован: приложение видит CacheUnavailable и собирает ленту из БД на каждый запрос.
             redis_stop
             for app in $apps; do
                 for vus in $levels; do

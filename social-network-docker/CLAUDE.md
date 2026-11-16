@@ -11,7 +11,9 @@
   Лимиты CPU и памяти узлов БД задаются в compose (`POSTGRES_CPUS`, `POSTGRES_MEMORY`) и одинаковы у всех узлов.
 - `bench/`: генераторы нагрузки (`load.php` для `make bench-get`, сценарии k6 `search.js` для `make bench-search`,
   `get.js`/`search.js` для `make bench-read`, `write.js` для `make bench-write`), набор запросов поиска `search-queries.csv`,
-  список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится),
+  список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится), для ленты постов `feed.sh`/`feed.js`/`post.js`
+  (`make bench-feed`; фаза nocache блокирует Redis сменой пароля, а не остановкой: остановленный контейнер даёт секунду на DNS),
+  `fanout-latency.sh` (`make bench-fanout`) и `explain-feed.sql` (`make explain-feed`),
   образ для графиков `plot/` (matplotlib). В приложения не входят.
 - `replication/`: операционные скрипты репликации: `status.sh` (`make repl-status`), `sync-mode.sh` (`make repl-sync`,
   `make repl-async`: кворумная синхронная репликация `ANY 1 (replica1, replica2)` и обратно). Штатный режим кластера: async.

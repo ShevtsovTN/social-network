@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure seed-posts-file seed-feed reset-feed bench-feed-readers bench-feed bench-fanout
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read explain-feed bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure seed-posts-file seed-feed reset-feed bench-feed-readers bench-feed bench-fanout
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -77,6 +77,12 @@ bench-feed: ## Замер ленты постов (k6): make bench-feed PHASE=и
 
 bench-fanout: ## Задержка fan-out: от создания поста до появления в ленте подписчика, малый/средний автор и «знаменитость»: make bench-fanout [PHASE=имя] [ITERATIONS=20]
 	./social-network-docker/bench/fanout-latency.sh
+
+explain-feed: ## EXPLAIN (ANALYZE, BUFFERS) запросов ленты на реплике в docs/homework-feed/explain/<PHASE>.txt: make explain-feed PHASE=before-indexes
+	@test -n "$(PHASE)" || { echo "Укажите PHASE, например PHASE=before-indexes" >&2; exit 1; }
+	mkdir -p docs/homework-feed/explain
+	$(COMPOSE) exec -T postgres-replica-1 sh -c 'psql -X -q -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f -' \
+		< social-network-docker/bench/explain-feed.sql | tee docs/homework-feed/explain/$(PHASE).txt
 
 bench-plot: ## Графики и таблицы по итогам bench-search в docs/homework-indexes/
 	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null

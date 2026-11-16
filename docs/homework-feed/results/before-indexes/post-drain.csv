@@ -1,0 +1,9 @@
+run,backlog_at_end,remaining,drain_seconds,events_per_second
+post-native-c1,3148,2091,120.2,8.8
+post-native-c10,10402,9326,120.4,8.9
+post-native-c50,9539,8659,120.5,7.3
+post-native-c100,9621,8674,120.3,7.9
+post-symfony-c1,2953,1872,120.1,9.0
+post-symfony-c10,8557,7457,120.5,9.1
+post-symfony-c50,8555,7456,120.0,9.2
+post-symfony-c100,7017,5942,120.2,8.9
