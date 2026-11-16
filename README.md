@@ -153,7 +153,7 @@ make repl-rebuild                              # кластер PostgreSQL с н
   с остановленным Redis.
   `make compare` (около 375 кейсов, включая друзей, посты и ленту) не находит расхождений между приложениями, `make compare-infrastructure`
   подтверждает, что Infrastructure ленты в двух копиях совпадает.
-- Готово также: сид друзей и постов (`make seed-feed`). Не готово: замеры, индексы `004` и `005` по замеру и отчёт `docs/homework-feed/`.
+- Готово также: сид друзей и постов (`make seed-feed`), замеры до и после индексов `004` и `005`, отчёт `docs/homework-feed/README.md`.
 
 **Как устроено**
 
@@ -186,7 +186,8 @@ make repl-rebuild                              # кластер PostgreSQL с н
 
    Проверка: `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'` должна показать
    `users`, `friendships` и `posts`. Повторный запуск `003` завершится ошибкой «relation already exists», это нормально.
-   Чистая БД с нуля: `make reset-db && make up` (после этого миллион анкет заливается заново, `make seed`).
+   Индексы ленты `004` и `005` применяются так же (на существующий том вручную, ошибка «already exists» при повторе нормальна);
+   на чистой БД все миграции применяются сами. Чистая БД с нуля: `make reset-db && make up` (после этого миллион анкет заливается заново, `make seed`).
 3. Проверить Redis и воркеры: `make redis-cli c="PING"` отвечает `PONG`, `make ps` показывает `redis` как healthy, а `worker-native`
    и `worker-symfony` как Up; `make worker-logs` содержит строки `feed worker started`.
 4. Прогнать Postman-коллекцию против обоих приложений (раздел «Postman-коллекция» ниже): папки «Second user», «Posts»,
@@ -395,6 +396,7 @@ make bench-plot                     # графики и таблицы в docs/h
 make bench-feed-readers                     # 20 000 читателей с токенами в social-network-docker/bench/feed-readers.csv (в git не хранится)
 make bench-feed PHASE=before-indexes        # nocache, cold, warm и post на обоих приложениях, уровни 1, 10, 50, 100 VU
 make bench-fanout PHASE=before-indexes      # задержка fan-out: малый, средний автор и «знаменитость»
+make explain-feed PHASE=before-indexes      # EXPLAIN (ANALYZE, BUFFERS) запросов ленты в docs/homework-feed/explain/
 ```
 
 Параметры `bench-feed`: `MODES` (`nocache cold warm post`), `LEVELS`, `DURATION` (30s), `WARMUP` (10s), `WARM_SIZE` (2000 читателей в `warm`),
@@ -404,7 +406,7 @@ make bench-fanout PHASE=before-indexes      # задержка fan-out: малы
 
 Что означают режимы:
 
-- `nocache`: Redis остановлен, приложение собирает ленту из БД на каждый запрос (чтение с реплики);
+- `nocache`: Redis недоступен (заблокирован сменой пароля, остановленный контейнер дал бы лишнюю секунду на разрешение имени), приложение собирает ленту из БД на каждый запрос (чтение с реплики);
 - `cold`: кэш сброшен, каждый запрос от нового читателя: промах, сборка из БД, запись в Redis;
 - `warm`: ленты читателей уже в Redis, это попадания в кэш (перед замером кэш заполняется, `redis-stats.csv` даёт hit ratio);
 - `post`: `POST /post/create` и асинхронный fan-out; после нагрузки замеряется, как быстро воркер разбирает очередь.
@@ -436,4 +438,5 @@ Xdebug есть только в dev-образе и по умолчанию вы
 - `openapi.json`: спецификация из задания (источник истины для контракта).
 - `postman/social-network.postman_collection.json`: Postman-коллекция.
 - `homework-indexes/`: отчёт ДЗ «Производительность индексов» (`README.md`), графики, итоги k6 и EXPLAIN.
+- `homework-feed/`: отчёт ДЗ «Лента постов» (`README.md`), итоги k6 и планы запросов (`results/`, `explain/`).
 - `homework-replication/`: отчёт ДЗ «Репликация» (`README.md`), итоги k6 и экспериментов в `results/`, скриншоты дашбордов в `img/`.
