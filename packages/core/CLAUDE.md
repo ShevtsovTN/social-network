@@ -6,7 +6,8 @@
 - `Application`: use cases (command/query + handler) и порты
   (`UserRepository`, `PasswordHasher`, `TokenIssuer`, `TokenVerifier`, `UserIdGenerator`, `Clock`;
   для ДЗ «Лента постов»: `PostRepository`, `FriendshipRepository`, `FeedSource`, `FeedCache`, `PostCache`,
-  `FeedEventPublisher`, `FeedEventConsumer`, `PostIdGenerator`, исключение `CacheUnavailable`).
+  `FeedEventPublisher`, `FeedEventConsumer`, `PostIdGenerator`, исключение `CacheUnavailable`;
+  для ДЗ «Шардинг диалогов»: `MessageRepository`, `MessageIdGenerator`).
   Зависит только от Domain.
 - Use cases: `RegisterUser` (возвращает `UserId`), `Login` (возвращает токен, при любой
   неудаче `InvalidCredentials`), `GetUser` (возвращает `User`, иначе `UserNotFound`),
@@ -21,8 +22,15 @@
   применяет асинхронно. Fan-out пишет только в уже существующие ленты (`FeedCache::mergeIfPresent`), остальные
   собираются лениво при чтении (`FeedSource` читает БД; какой PDO ему дать, решает composition root:
   холодная пересборка с реплики, backfill воркера с primary).
+- Use cases ДЗ «Шардинг диалогов»: `SendMessage` (проверяет получателя через `UserRepository`, несуществующий —
+  `UserNotFound`; какой PDO ему дать, решает composition root: реплика с fallback на primary), `GetDialog`
+  (`list<Message>` от старых к новым, страница `DialogPageRequest`: `limit` и курсор `before`; собеседник не проверяется,
+  нет сообщений — пустой список). `DialogId` не передаётся снаружи, а вычисляется по паре участников; это ключ
+  шардирования, поэтому способ вычисления менять нельзя (закреплён тестом). Порядок сообщений задаёт `MessageId`
+  (UUIDv7), а не время отправки. Сообщение самому себе и диалог с собой — `InvalidDialogData`.
 - Ошибки данных: `Domain\User\InvalidUserData`, `Domain\Post\InvalidPostData`, `Domain\Friend\InvalidFriendship`,
-  `Domain\Feed\InvalidFeedPage` с полем `field` в терминах домена (`firstName`, `text`, `friendId`, `limit`, ...).
+  `Domain\Feed\InvalidFeedPage`, `Domain\Dialog\InvalidDialogData` с полем `field` в терминах домена (`firstName`,
+  `text`, `friendId`, `recipientId`, `companionId`, `limit`, `before`, ...).
   Сопоставление с полями запроса и HTTP-статусами делают приложения.
 - Реализаций портов в `core` нет. Их пишут приложения.
 
@@ -49,7 +57,9 @@
   `FeedStorage` (друзья ссылаются на пользователей, посты на авторов); очередь событий — парой `FeedEventChannel`
   (издатель и потребитель над одним потоком, неподтверждённое событие доставляется повторно сразу);
   `FeedFixture` даёт id, время и посты с возрастающими номерами. Кэши (`FeedCache`, `PostCache`) отличают
-  промах (`null`) от пустой ленты (`[]`).
+  промах (`null`) от пустой ленты (`[]`). Диалоги: `MessageRepositoryContractTest` (репозиторий над пустым хранилищем,
+  пользователи в нём не нужны), `MessageIdGeneratorContractTest` (уникальность и порядок id по времени),
+  участников и сообщения с возрастающими номерами даёт `MessageFixture`.
 - In-memory реализации всех портов лежат в `tests/Unit/Fake` и сами проходят contract-тесты (`InMemory…Test`).
 - Namespace `SocialNetwork\CoreContract\` (папка `tests/Contract`) входит в `autoload`,
   а не в `autoload-dev`, чтобы приложения могли подключать contract-тесты.
