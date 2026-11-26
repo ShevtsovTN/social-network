@@ -101,9 +101,12 @@ if [ "${RESTART_PHP:-1}" = "1" ]; then
 fi
 
 # Порт приложения обязан вести в его контейнер. Различаем по заголовку: Symfony отдаёт Cache-Control, native нет.
+# Запрос идёт на несуществующий путь и не обращается к БД: запрос с чтением открыл бы по одному постоянному соединению
+# через haproxy до начала нагрузки и перекосил бы распределение воркеров по репликам (3:1 вместо 2:2).
 check_routing() {
     local app="$1" headers has_cache_control
-    headers="$(curl -s -D - -o /dev/null "http://127.0.0.1:${ports[$app]}/user/get/00000000-0000-4000-8000-000000000000" | tr -d '\r')"
+    headers="$(curl -s -D - -o /dev/null "http://127.0.0.1:${ports[$app]}/routing-check" | tr -d '\r')"
+    grep -q '^HTTP/[0-9.]* 404' <<< "$headers" || { echo "Приложение ${app} не отвечает на порту ${ports[$app]}." >&2; exit 1; }
     has_cache_control="$(grep -ci '^cache-control:' <<< "$headers" || true)"
     case "$app" in
         native) [ "$has_cache_control" = "0" ] ;;

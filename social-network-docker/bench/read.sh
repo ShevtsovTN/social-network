@@ -8,7 +8,7 @@
 #   LEVELS    "1 10 100 1000" (число виртуальных пользователей)
 #   DURATION  60s, WARMUP 10s
 #   APPS      "native symfony"
-#   RESTART_PHP 1 (перезапуск php перед замером, см. ниже); 0 отключает
+#   RESTART_PHP 1 (перезапуск php вместе с nginx перед замером, см. ниже); 0 отключает
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,10 +38,30 @@ done
 # подключается. После чужих запросов (тесты, Postman, предыдущие замеры) воркеры приложения могут оказаться
 # все на одной реплике, и вся нагрузка пойдёт на неё. После перезапуска воркеры подключаются подряд,
 # round-robin раскладывает их 2+2. Отключается RESTART_PHP=0.
+# php перезапускается ВМЕСТЕ с nginx: у нового контейнера php может оказаться другой IP (при одновременном перезапуске двух
+# контейнеров они меняются адресами), а nginx держит адрес апстрима, разрешённый при старте. Без перезапуска nginx порт одного
+# приложения уходит в контейнер другого, и подписи «native» и «symfony» в результатах путаются.
 if [ "${RESTART_PHP:-1}" = "1" ]; then
-    (cd "$root" && docker compose -f docker-compose.yaml restart php-native php-symfony >/dev/null)
+    (cd "$root" && docker compose -f docker-compose.yaml restart php-native php-symfony nginx-native nginx-symfony >/dev/null)
     sleep 3
 fi
+
+# Порт приложения обязан вести в его контейнер. Различаем по заголовку: Symfony отдаёт Cache-Control, native нет.
+# Запрос идёт на несуществующий путь и не обращается к БД: запрос с чтением открыл бы по одному постоянному соединению
+# через haproxy до начала нагрузки и перекосил бы распределение воркеров по репликам (3:1 вместо 2:2).
+check_routing() {
+    local app="$1" headers has_cache_control
+    headers="$(curl -s -D - -o /dev/null "http://127.0.0.1:${ports[$app]}/routing-check" | tr -d '\r')"
+    grep -q '^HTTP/[0-9.]* 404' <<< "$headers" || { echo "Приложение ${app} не отвечает на порту ${ports[$app]}." >&2; exit 1; }
+    has_cache_control="$(grep -ci '^cache-control:' <<< "$headers" || true)"
+    case "$app" in
+        native) [ "$has_cache_control" = "0" ] ;;
+        symfony) [ "$has_cache_control" != "0" ] ;;
+    esac || { echo "Порт ${app} ведёт не в контейнер ${app}: перезапустите nginx вместе с php (docker compose restart nginx-native nginx-symfony)." >&2; exit 1; }
+}
+for app in $apps; do
+    check_routing "$app"
+done
 
 # Сэмплер CPU и памяти контейнеров: раз в 5 с в docker-stats.log рядом с итогами, перед каждым прогоном
 # в лог пишется метка «# <сценарий> <приложение> c<N>». Нужен, чтобы видеть, что упирается в лимит (php или БД).
