@@ -3,3 +3,6 @@ get-ids.csv
 
 # Читатели ленты с токенами для нагрузки GET /post/feed и POST /post/create: свои для каждого сидирования (make bench-feed-readers).
 feed-readers.csv
+
+# Пары участников диалогов с токенами для нагрузки (make bench-dialog-users).
+dialog-users.csv

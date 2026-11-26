@@ -9,3 +9,7 @@ apps/symfony/var/
 
 # Пробные прогоны харнесса замеров ленты (make bench-feed PHASE=smoke) в репозиторий не попадают.
 docs/homework-feed/results/smoke/
+
+# Сырой лог запросов прогона решардинга (десятки мегабайт): в git только разбор (summary.md, timeline.csv).
+docs/homework-sharding/results/**/requests.log
+docs/homework-sharding/results/**/markers.txt

@@ -14,7 +14,12 @@
   список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится), для ленты постов `feed.sh`/`feed.js`/`post.js`
   (`make bench-feed`; фаза nocache блокирует Redis сменой пароля, а не остановкой: остановленный контейнер даёт секунду на DNS),
   `fanout-latency.sh` (`make bench-fanout`) и `explain-feed.sql` (`make explain-feed`),
-  образ для графиков `plot/` (matplotlib). В приложения не входят.
+  образ для графиков `plot/` (matplotlib). Для диалогов (ДЗ «Шардинг диалогов»): `dialog.js` (k6: поток отправок и чтений
+  с перекосом на горячий диалог и «Леди Гагу»), `dialog-users.sh` (`make bench-dialog-users`, `dialog-users.csv` не в git),
+  `dialog-reshard.sh` (`make bench-dialog-reshard`: решардинг под нагрузкой, разбор в `dialog-report.py`), `dialog-skew.sh`
+  и `.sql` (`make dialogs-skew`), `dialog-scale.sh` и `.sql` (`make bench-dialog-scale`: pgbench прямо на координатор при 2–4
+  воркерах, отдельный проект compose `social-network-scale`, после замера удаляется). Пока идёт нагрузка, скрипт эксперимента читает только метаданные кластера: подсчёт строк
+  в шардах сам портит задержки. В приложения не входят.
 - `replication/`: операционные скрипты репликации: `status.sh` (`make repl-status`), `sync-mode.sh` (`make repl-sync`,
   `make repl-async`: кворумная синхронная репликация `ANY 1 (replica1, replica2)` и обратно). Штатный режим кластера: async.
   Эксперимент с аварией: `failover-experiment.sh` (`make repl-failover MODE=async|sync`: нагрузка на запись, kill -9 primary,
@@ -36,8 +41,17 @@
   основным паролем Redis; стримы событий для него перечислены в compose (`REDIS_EXPORTER_CHECK_SINGLE_STREAMS`, имена
   `<REDIS_KEY_PREFIX>:feed-events`: при смене префиксов поправить). Панель ленты: `grafana/dashboards/feed-redis.json`.
   Пока `make bench-feed` держит фазу nocache (пароль Redis сменён), экспортёр не может войти, и метрики Redis пропадают.
-- `compare/`: `compare.php` (`make compare`, сверка HTTP-ответов native и symfony, включая друзей, посты и ленту) и `infrastructure.sh`
-  (`make compare-infrastructure`, сверка Infrastructure ленты в двух копиях после нормализации namespace).
+- `citus/` (ДЗ «Шардинг диалогов»): кластер Citus для сообщений диалогов, отдельный от основного PostgreSQL.
+  `postgresql.conf` один на координатор и воркеры (`shared_preload_libraries = 'citus'`, `wal_level = logical` для переноса
+  шардов под нагрузкой); `node-entrypoint.sh` пишет `.pgpass` из окружения (пароль для подключений между узлами; сами они идут
+  по SSL: Citus включает его с самоподписанным сертификатом); `cluster-init.sh` (сервис `dialogs-init`, повторяемый) регистрирует
+  воркеры и применяет `db/dialogs/migrations` с отметками в `schema_migrations` на координаторе; `status.sql`
+  (`make dialogs-status`); `rebuild.sh` (`make dialogs-rebuild`: кластер с нуля и сид из `db/dialogs/seed`, удаляет все
+  сообщения). Сервисы `dialogs-coordinator`, `dialogs-worker-1`, `dialogs-worker-2` входят в `make up` и
+  `make bench-up`, `dialogs-worker-3` и `dialogs-worker-4` (узел под шард горячего диалога) только в профиле `reshard`. Лимиты: `DIALOGS_WORKER_*` одинаковы у всех воркеров,
+  `DIALOGS_COORDINATOR_*` у координатора; на хосте открыт только координатор (`DIALOGS_POSTGRES_PORT`, 5440).
+- `compare/`: `compare.php` (`make compare`, сверка HTTP-ответов native и symfony, включая друзей, посты, ленту и диалоги) и
+  `infrastructure.sh` (`make compare-infrastructure`, сверка Infrastructure ленты и диалогов в двух копиях после нормализации namespace).
 - `docker-compose.yaml`, `docker-compose.override.yaml` и `.env` лежат в корне репозитория, не здесь.
 
 ## Правила

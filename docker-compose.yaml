@@ -19,6 +19,9 @@ x-php-app: &php-app
     # (замер baseline «одна нода» для сравнения с репликами).
     DB_READ_HOST: ${DB_READ_HOST:-haproxy}
     DB_READ_PORT: "5432"
+    # Сообщения диалогов: координатор кластера Citus (ДЗ «Шардинг диалогов»). База, пользователь и пароль те же.
+    DIALOGS_DB_HOST: dialogs-coordinator
+    DIALOGS_DB_PORT: "5432"
     DB_NAME: ${POSTGRES_DB}
     DB_USER: ${POSTGRES_USER}
     DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -86,6 +89,33 @@ x-postgres-replica-env: &postgres-replica-env
   REPLICATION_USER: ${REPLICATION_USER}
   REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
 
+# Узел кластера Citus (PostgreSQL 17 с расширением citus) для сообщений диалогов. Отдельный от основного
+# PostgreSQL кластер: свой конфиг (wal_level = logical) и свои тома.
+x-citus: &citus
+  image: citusdata/citus:14.2.0-pg17
+  entrypoint: ["/node-entrypoint.sh"]
+  command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+  environment:
+    <<: *postgres-env
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  # Скрипт из образа: pg_isready по сетевому адресу, поэтому узел не считается готовым, пока идёт инициализация тома.
+  healthcheck:
+    test: ["CMD-SHELL", "/pg_healthcheck"]
+    interval: 5s
+    timeout: 6s
+    retries: 10
+  networks:
+    - backend
+
+# Лимиты одинаковы у всех воркеров, см. CLAUDE.md; у координатора они свои.
+x-citus-worker: &citus-worker
+  <<: *citus
+  deploy:
+    resources:
+      limits:
+        cpus: "${DIALOGS_WORKER_CPUS:-0.5}"
+        memory: ${DIALOGS_WORKER_MEMORY:-512M}
+
 services:
   # --- PostgreSQL: primary и две реплики (потоковая репликация) ---
   # Primary принимает запись. Реплики снимают базовую копию с primary при первом старте
@@ -152,6 +182,81 @@ services:
         limits:
           cpus: "1"
           memory: 128M
+    networks:
+      - backend
+
+  # --- Кластер Citus: сообщения диалогов (ДЗ «Шардинг диалогов») ---
+  # Приложения подключаются только к координатору: он хранит метаданные о шардах и направляет запрос на воркер,
+  # где лежит шард нужного диалога. Сами шарды лежат на воркерах.
+  dialogs-coordinator:
+    <<: *citus
+    volumes:
+      - pgdata-dialogs-coordinator:/var/lib/postgresql/data
+      # Скрипты наполнения диалогов (make seed-dialogs), запускаются вручную.
+      - ./db/dialogs/seed:/seed:ro
+      - ./social-network-docker/citus/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/citus/node-entrypoint.sh:/node-entrypoint.sh:ro
+    ports:
+      - "${DIALOGS_POSTGRES_PORT:-5440}:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: "${DIALOGS_COORDINATOR_CPUS:-1}"
+          memory: ${DIALOGS_COORDINATOR_MEMORY:-512M}
+
+  dialogs-worker-1:
+    <<: *citus-worker
+    volumes:
+      - pgdata-dialogs-worker-1:/var/lib/postgresql/data
+      - ./social-network-docker/citus/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/citus/node-entrypoint.sh:/node-entrypoint.sh:ro
+
+  dialogs-worker-2:
+    <<: *citus-worker
+    volumes:
+      - pgdata-dialogs-worker-2:/var/lib/postgresql/data
+      - ./social-network-docker/citus/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/citus/node-entrypoint.sh:/node-entrypoint.sh:ro
+
+  # Третий воркер для решардинга: в обычный запуск не входит (профиль reshard), в кластер добавляется под нагрузкой.
+  dialogs-worker-3:
+    <<: *citus-worker
+    profiles: [reshard]
+    volumes:
+      - pgdata-dialogs-worker-3:/var/lib/postgresql/data
+      - ./social-network-docker/citus/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/citus/node-entrypoint.sh:/node-entrypoint.sh:ro
+
+  # Четвёртый воркер: отдельный узел под шард горячего диалога (профиль reshard, добавляется после его изоляции).
+  dialogs-worker-4:
+    <<: *citus-worker
+    profiles: [reshard]
+    volumes:
+      - pgdata-dialogs-worker-4:/var/lib/postgresql/data
+      - ./social-network-docker/citus/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./social-network-docker/citus/node-entrypoint.sh:/node-entrypoint.sh:ro
+
+  # Разовый сервис: регистрирует воркеры на координаторе и применяет db/dialogs/migrations, после чего завершается.
+  dialogs-init:
+    image: citusdata/citus:14.2.0-pg17
+    entrypoint: ["/bin/sh", "/cluster-init.sh"]
+    environment:
+      PGHOST: dialogs-coordinator
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      DIALOGS_WORKERS: dialogs-worker-1 dialogs-worker-2
+    volumes:
+      - ./social-network-docker/citus/cluster-init.sh:/cluster-init.sh:ro
+      - ./db/dialogs/migrations:/migrations:ro
+    depends_on:
+      dialogs-coordinator:
+        condition: service_healthy
+      dialogs-worker-1:
+        condition: service_healthy
+      dialogs-worker-2:
+        condition: service_healthy
+    restart: "no"
     networks:
       - backend
 
@@ -393,6 +498,11 @@ volumes:
   pgdata:
   pgdata-replica-1:
   pgdata-replica-2:
+  pgdata-dialogs-coordinator:
+  pgdata-dialogs-worker-1:
+  pgdata-dialogs-worker-2:
+  pgdata-dialogs-worker-3:
+  pgdata-dialogs-worker-4:
   prometheus-data:
   grafana-data:
 
