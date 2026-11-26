@@ -1,0 +1,76 @@
+Планы запросов приложения на кластере после решардинга (make dialogs-psql), 2026-11-26.
+Страница горячего диалога с курсором в глубине истории (запрос репозитория):
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Custom Scan (Citus Adaptive) (actual time=0.927..0.929 rows=50 loops=1)
+   Task Count: 1
+   Tuple data received from nodes: 11 kB
+   Tasks Shown: All
+   ->  Task
+         Tuple data received from node: 11 kB
+         Node: host=dialogs-worker-4 port=5432 dbname=social
+         ->  Limit (actual time=0.011..0.143 rows=50 loops=1)
+               Buffers: shared hit=10 read=45
+               ->  Index Scan Backward using dialog_messages_pkey_102073 on dialog_messages_102073 dialog_messages (actual time=0.011..0.140 rows=50 loops=1)
+                     Index Cond: ((dialog_id = 'a70a9808-f815-8f34-8623-7eb59b1d27cb'::uuid) AND (id < '01a1484e-2b25-7530-844f-dc6726bf77d0'::uuid))
+                     Buffers: shared hit=10 read=45
+             Planning:
+               Buffers: shared hit=14 read=1
+             Planning Time: 0.075 ms
+             Execution Time: 0.162 ms
+   Buffers: shared hit=3
+ Planning Time: 0.058 ms
+ Execution Time: 0.945 ms
+(19 rows)
+
+То же через OFFSET той же глубины (для сравнения, приложение так не делает):
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Custom Scan (Citus Adaptive) (actual time=81.395..81.398 rows=50 loops=1)
+   Task Count: 1
+   Tuple data received from nodes: 11 kB
+   Tasks Shown: All
+   ->  Task
+         Tuple data received from node: 11 kB
+         Node: host=dialogs-worker-4 port=5432 dbname=social
+         ->  Limit (actual time=80.854..80.874 rows=50 loops=1)
+               Buffers: shared hit=93419 read=5970
+               ->  Index Scan Backward using dialog_messages_pkey_102073 on dialog_messages_102073 dialog_messages (actual time=0.005..78.321 rows=100050 loops=1)
+                     Index Cond: (dialog_id = 'a70a9808-f815-8f34-8623-7eb59b1d27cb'::uuid)
+                     Buffers: shared hit=93419 read=5970
+             Planning Time: 0.027 ms
+             Execution Time: 80.898 ms
+ Planning Time: 0.025 ms
+ Execution Time: 81.407 ms
+(16 rows)
+
+Вставка сообщения:
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Custom Scan (Citus Adaptive) (actual time=0.667..0.668 rows=0 loops=1)
+   Task Count: 1
+   Tasks Shown: All
+   ->  Task
+         Node: host=dialogs-worker-4 port=5432 dbname=social
+         ->  Insert on dialog_messages_102073 (actual time=0.102..0.103 rows=0 loops=1)
+               ->  Result (actual time=0.001..0.002 rows=1 loops=1)
+             Planning Time: 0.014 ms
+             Execution Time: 0.114 ms
+ Planning Time: 0.066 ms
+ Execution Time: 0.849 ms
+(11 rows)
+
+Для сравнения запрос без ключа шардирования обходит все шарды:
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Custom Scan (Citus Adaptive)
+         Task Count: 66
+         Tasks Shown: One of 66
+         ->  Task
+               Node: host=dialogs-worker-3 port=5432 dbname=social
+               ->  Aggregate
+                     ->  Seq Scan on dialog_messages_102008 dialog_messages
+                           Filter: (sender_id = '11111111-1111-4111-8111-111111111111'::uuid)
+(9 rows)
+

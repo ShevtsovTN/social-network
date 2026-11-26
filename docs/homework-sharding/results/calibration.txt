@@ -1,0 +1,24 @@
+Калибровка нагрузки перед экспериментом (2026-11-26): только отправка, k6 без пауз, native, стек bench, 2 воркера, 2 млн сообщений.
+CPU — один снимок docker stats в середине прогона, в процентах одного ядра.
+
+VUS=8:  rps=1654.2 requests=49634 failed=0.000% p50=4.1ms p95=5.5ms p99=16.0ms max=1008.1ms
+social-network-nginx-native-1 cpu=23.23% mem=25.51MiB / 59.96GiB
+social-network-php-native-1 cpu=62.48% mem=19.03MiB / 512MiB
+social-network-dialogs-coordinator-1 cpu=37.24% mem=79.15MiB / 512MiB
+social-network-dialogs-worker-1-1 cpu=13.63% mem=199.7MiB / 512MiB
+social-network-dialogs-worker-2-1 cpu=19.66% mem=201.8MiB / 512MiB
+social-network-postgres-1 cpu=0.00% mem=299.6MiB / 1GiB
+social-network-haproxy-1 cpu=10.51% mem=31.2MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=13.78% mem=304.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=13.46% mem=304.6MiB / 1GiB
+
+VUS=32: rps=1952.8 requests=58613 failed=0.000% p50=16.2ms p95=17.6ms p99=18.5ms max=54.1ms
+social-network-nginx-native-1 cpu=23.04% mem=25.7MiB / 59.96GiB
+social-network-php-native-1 cpu=66.95% mem=19.53MiB / 512MiB
+social-network-dialogs-coordinator-1 cpu=40.26% mem=78.82MiB / 512MiB
+social-network-dialogs-worker-1-1 cpu=14.78% mem=200.5MiB / 512MiB
+social-network-dialogs-worker-2-1 cpu=18.49% mem=201.9MiB / 512MiB
+social-network-postgres-1 cpu=0.00% mem=299.6MiB / 1GiB
+social-network-haproxy-1 cpu=10.92% mem=31.2MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.91% mem=303.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=15.87% mem=304.1MiB / 1GiB
