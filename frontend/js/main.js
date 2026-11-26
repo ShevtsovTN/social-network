@@ -1,12 +1,13 @@
 import { createApi } from './api.js';
 import { el } from './dom.js';
 import { BACKENDS, clearSession, getBackend, getSession, setBackend } from './session.js';
+import { renderDialog } from './views/dialog.js';
 import { renderLogin } from './views/login.js';
 import { renderProfile } from './views/profile.js';
 import { renderRegister } from './views/register.js';
 import { renderSearch } from './views/search.js';
 
-const views = { register: renderRegister, login: renderLogin, user: renderProfile, search: renderSearch };
+const views = { register: renderRegister, login: renderLogin, user: renderProfile, search: renderSearch, dialog: renderDialog };
 
 const app = document.getElementById('app');
 const sessionBar = document.getElementById('session-bar');

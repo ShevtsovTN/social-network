@@ -101,9 +101,9 @@ export function createSummary() {
 
 /**
  * Подписывает форму на отправку: блокирует кнопку на время запроса и раскладывает ошибку
- * по полю (400 с известным `field`) или в общее сообщение.
+ * по полю (400 с известным `field`) или в общее сообщение. Тексты ошибок экран может задать свои (`describe`).
  */
-export function handleSubmit(form, button, { fields, summary }, action) {
+export function handleSubmit(form, button, { fields, summary, describe = describeFailure }, action) {
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -118,7 +118,7 @@ export function handleSubmit(form, button, { fields, summary }, action) {
         try {
             await action();
         } catch (error) {
-            const failure = describeFailure(error);
+            const failure = describe(error);
             const field = error instanceof ApiError && error.status === 400 ? fields[error.field] : undefined;
 
             if (field === undefined) {

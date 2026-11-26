@@ -16,17 +16,32 @@ export class ApiError extends Error {
 }
 
 export function createApi(getBackend) {
-    async function request(method, path, body) {
+    /** @returns разобранное тело ответа; null для 204 */
+    async function request(method, path, body, token) {
+        const headers = {};
+
+        if (body !== undefined) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        if (token !== undefined) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
         let response;
 
         try {
             response = await fetch(`/api/${getBackend()}${path}`, {
                 method,
-                headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+                headers,
                 body: body === undefined ? undefined : JSON.stringify(body),
             });
         } catch {
             throw new ApiError(0, '');
+        }
+
+        if (response.status === 204) {
+            return null;
         }
 
         let payload = null;
@@ -56,5 +71,21 @@ export function createApi(getBackend) {
         getUser: (id) => request('GET', `/user/get/${encodeURIComponent(id)}`),
         /** @returns {Promise<Array<object>>} анкеты, отсортированные по id */
         searchUsers: (firstName, lastName) => request('GET', `/user/search?${new URLSearchParams({ first_name: firstName, last_name: lastName })}`),
+        /** @returns {Promise<null>} */
+        sendMessage: (token, userId, text) => request('POST', `/dialog/${encodeURIComponent(userId)}/send`, { text }, token),
+        /**
+         * Страница диалога: не больше limit самых новых сообщений, идущих раньше сообщения before.
+         *
+         * @returns {Promise<Array<{id: string, from: string, to: string, text: string}>>} от старых к новым
+         */
+        getDialog: (token, userId, { limit, before }) => {
+            const query = new URLSearchParams({ limit: String(limit) });
+
+            if (before !== undefined) {
+                query.set('before', before);
+            }
+
+            return request('GET', `/dialog/${encodeURIComponent(userId)}/list?${query}`, undefined, token);
+        },
     };
 }
