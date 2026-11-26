@@ -1,0 +1,49 @@
+=== до решардинга
+     nodename     | shards | messages |  size  
+------------------+--------+----------+--------
+ dialogs-worker-1 |     32 |   902215 | 301 MB
+ dialogs-worker-2 |     32 |  1097785 | 363 MB
+(2 rows)
+
+Горячий диалог:
+ shardid |     nodename     | messages_in_shard | shard_size 
+---------+------------------+-------------------+------------
+  102011 | dialogs-worker-2 | 229841            | 74 MB
+(1 row)
+
+=== план ребалансировки
+    sourcename    |    targetname    | shard_moves |  size   
+------------------+------------------+-------------+---------
+ dialogs-worker-1 | dialogs-worker-3 |           9 | 0 bytes
+ dialogs-worker-2 | dialogs-worker-3 |          10 | 0 bytes
+(2 rows)
+
+=== фоновое задание ребалансировки
+  state   |    tasks     |      took       
+----------+--------------+-----------------
+ finished | {"done": 19} | 00:00:24.727431
+(1 row)
+
+=== после ребалансировки (число шардов на узлах)
+     nodename     | shards 
+------------------+--------
+ dialogs-worker-1 |     23
+ dialogs-worker-2 |     22
+ dialogs-worker-3 |     19
+(3 rows)
+
+=== после выделения горячего диалога (шард 102073 перенесён dialogs-worker-3 -> dialogs-worker-4)
+     nodename     | shards | messages |  size  
+------------------+--------+----------+--------
+ dialogs-worker-1 |     23 |   659977 | 213 MB
+ dialogs-worker-2 |     22 |   633790 | 204 MB
+ dialogs-worker-3 |     20 |   584488 | 190 MB
+ dialogs-worker-4 |      1 |   208619 | 66 MB
+(4 rows)
+
+Горячий диалог:
+ shardid |     nodename     | messages_in_shard | shard_size 
+---------+------------------+-------------------+------------
+  102073 | dialogs-worker-4 | 208619            | 66 MB
+(1 row)
+

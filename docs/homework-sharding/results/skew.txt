@@ -1,0 +1,26 @@
+psql:<stdin>:6: NOTICE:  table "skew_by_sender" does not exist, skipping
+Все сообщения по воркерам
+ shard_key |     nodename     | messages | share_percent 
+-----------+------------------+----------+---------------
+ dialog_id | dialogs-worker-1 |   902215 |          45.1
+ dialog_id | dialogs-worker-2 |  1097785 |          54.9
+ sender_id | dialogs-worker-1 |   823550 |          41.2
+ sender_id | dialogs-worker-2 |  1176450 |          58.8
+(4 rows)
+
+Сообщения «Леди Гаги» по воркерам
+ shard_key |     nodename     | messages | share_percent | shards_with_her_messages 
+-----------+------------------+----------+---------------+--------------------------
+ dialog_id | dialogs-worker-1 |   181313 |          50.3 |                       32
+ dialog_id | dialogs-worker-2 |   178880 |          49.7 |                       32
+ sender_id | dialogs-worker-1 |        0 |           0.0 |                        0
+ sender_id | dialogs-worker-2 |   360193 |         100.0 |                        1
+(4 rows)
+
+Перекос шардов: самый большой шард относительно среднего
+ shard_key | shards | average | largest | largest_to_average 
+-----------+--------+---------+---------+--------------------
+ dialog_id |     64 |   31250 |  229841 |                7.4
+ sender_id |     64 |   31250 |  383282 |               12.3
+(2 rows)
+

@@ -8,8 +8,10 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   при ошибке инфраструктуры выходит с кодом 1, перезапуск делает docker compose).
 - `config/`: composition root, ручная сборка зависимостей (без autowiring).
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
-  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`.
-- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` (UUIDv7).
+  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`;
+  для ДЗ «Шардинг диалогов»: `PdoMessageRepository` (кластер Citus).
+- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` и `RandomMessageIdGenerator`
+  (UUIDv7).
 - `src/Infrastructure/Redis/` (ДЗ «Лента постов»): `RedisConnection` (ленивое подключение, таймауты, превращает ошибки сервера
   в `RedisException`), `RedisKeyspace` (имена ключей с префиксом приложения), `LuaScript` (EVALSHA с запасным EVAL),
   `RedisFeedCache` (лента в ZSET, Lua-скрипты), `RedisPostCache` (тела постов в JSON с TTL). Сбои превращаются в `CacheUnavailable`.
@@ -31,6 +33,9 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   `register` и `login` работают с primary, `search` читает реплики, `get` читает реплики через `PrimaryFallbackUserRepository`
   (свежесозданная анкета может ещё не дойти до реплики). Общего подключения и алиаса `UserRepository` по умолчанию нет:
   новый use case обязан выбрать явно. Подход одинаков в `native` и `symfony`.
+- Диалоги (ДЗ «Шардинг диалогов»): третье подключение `DIALOGS_DB_HOST` (координатор Citus; база, пользователь и пароль те же).
+  Репозиторий о шардах не знает, но каждый запрос обязан задавать `dialog_id`, иначе Citus опросит все шарды. `send`
+  проверяет получателя репозиторием `get` (реплика с fallback на primary). Подход одинаков в `native` и `symfony`.
 - Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
   `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
   не действуют (за него отвечает `dns_opt` в compose).
@@ -51,12 +56,13 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   и не требуют переменных окружения.
 - Контроллер: разобрать запрос, вызвать handler из `core`, сформировать ответ.
 - Валидация формата запроса на границе, до вызова use case.
-- Маппинг доменных исключений в HTTP-статусы в одном обработчике ошибок. Поле `friendId` домена в ответе называется `userId`
-  (так зовётся параметр пути), другие поля передаются как есть.
+- Маппинг доменных исключений в HTTP-статусы в одном обработчике ошибок. Поля домена `friendId`, `recipientId` и `companionId`
+  в ответе называются `userId` (так зовётся параметр пути), другие поля передаются как есть.
 - Тесты: `tests/Unit` (разбор Authorization, параметры запроса, маппинг ошибок, ответы) без инфраструктуры,
   `tests/Integration` на реальных PostgreSQL и Redis. Сквозная проверка контракта: Postman-коллекция через newman.
 - Формат ответов и коды ошибок строго по `docs/openapi.json`.
-- Интеграционные тесты наследуют contract-тесты из `core` и идут на реальном PostgreSQL.
+- Интеграционные тесты наследуют contract-тесты из `core` и идут на реальном PostgreSQL (тесты сообщений — на кластере Citus,
+  он должен быть запущен).
 - Не оптимизировать «в пользу» этого приложения: настройки PHP и ресурсы
   должны совпадать с Symfony-версией.
 - Namespace приложения: `SocialNetwork\NativeApp\`.

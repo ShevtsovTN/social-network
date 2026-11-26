@@ -1,5 +1,17 @@
 import { el } from '../dom.js';
+import { getSession } from '../session.js';
 import { GENDER_LABELS, describeFailure } from '../form.js';
+
+/** Написать можно кому угодно, кроме себя; без входа экран диалога сам предложит войти. */
+function writeAction(user) {
+    if (getSession()?.userId.toLowerCase() === user.id) {
+        return null;
+    }
+
+    return el('div', { class: 'actions' },
+        el('a', { class: 'button', href: `#/dialog/${encodeURIComponent(user.id)}` }, 'Написать'),
+    );
+}
 
 function userCard(user) {
     const interests = user.interests.length === 0
@@ -15,6 +27,7 @@ function userCard(user) {
             el('dt', {}, 'Интересы'), el('dd', {}, interests),
             el('dt', {}, 'ID'), el('dd', {}, user.id),
         ),
+        writeAction(user),
     );
 }
 

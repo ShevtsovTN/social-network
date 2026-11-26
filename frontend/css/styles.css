@@ -55,7 +55,7 @@ body > * { max-width: 40rem; margin-inline: auto; }
 
 .backend { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.9rem; }
 
-.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--border); }
 
 .tabs a {
     padding: 0.5rem 0.9rem;
@@ -171,3 +171,38 @@ button:disabled { opacity: 0.6; cursor: wait; }
 .profile ul { margin: 0; padding-left: 1.1rem; }
 
 .muted { color: var(--muted); }
+
+/* Диалог: список сообщений прокручивается внутри своей области. */
+.messages {
+    height: max(12rem, min(40vh, 30rem));
+    overflow-y: auto;
+    /* Позицию при подгрузке старых сообщений восстанавливает скрипт: встроенная привязка прокрутки сдвинула бы её дважды. */
+    overflow-anchor: none;
+    padding: 0.5rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.messages ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* Постоянная высота строки состояния: смена «Загрузка…» на другой текст не сдвигает сообщения. */
+.history-status { min-height: 2.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; }
+.history-status button { padding: 0.2rem 0.6rem; }
+
+.message {
+    align-self: flex-start;
+    max-width: 85%;
+    padding: 0.4rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.message.own { align-self: flex-end; border-color: var(--accent); }
+.message-author { display: block; font-size: 0.75rem; color: var(--muted); }
+.message-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+textarea { resize: vertical; }
+.compose { margin-top: 0.9rem; }
+.compose .actions { margin-top: 0; }

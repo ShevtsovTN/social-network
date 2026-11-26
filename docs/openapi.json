@@ -3,7 +3,7 @@
   "info": {
     "title": "Social Network API",
     "version": "1.0.0",
-    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id, поиск анкет по префиксу имени и фамилии, друзья, посты и лента постов друзей. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично. Методы друзей и постов (ДЗ «Лента постов») взяты из спецификации OTUS (https://github.com/OtusTeam/highload/blob/master/homework/openapi.json) с намеренными отступлениями; каждое отступление описано в description соответствующей операции. Общие отступления: имена полей и параметров в camelCase (в спецификации OTUS snake_case, например authorUserId вместо author_user_id); успешное создание возвращает 201 и объект {id}; операции без результата возвращают 204 без тела (в OTUS 200); отсутствующий ресурс — 404 (в OTUS такого ответа нет)."
+    "description": "Скелет социальной сети: регистрация, логин, просмотр анкеты по id, поиск анкет по префиксу имени и фамилии, друзья, посты, лента постов друзей и диалоги. Этот файл — источник истины для контракта; apps/native и apps/symfony реализуют его идентично. Методы друзей и постов (ДЗ «Лента постов») и диалогов (ДЗ «Шардинг диалогов») взяты из спецификации OTUS (https://github.com/OtusTeam/highload/blob/master/homework/openapi.json) с намеренными отступлениями; каждое отступление описано в description соответствующей операции. Общие отступления: имена полей и параметров в camelCase (в спецификации OTUS snake_case, например authorUserId вместо author_user_id); успешное создание возвращает 201 и объект {id}; операции без результата возвращают 204 без тела (в OTUS 200); отсутствующий ресурс — 404 (в OTUS такого ответа нет)."
   },
   "paths": {
     "/login": {
@@ -413,6 +413,104 @@
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
+    },
+    "/dialog/{userId}/send": {
+      "post": {
+        "operationId": "sendDialogMessage",
+        "summary": "Отправить сообщение пользователю",
+        "description": "Отправитель — текущий пользователь (из токена), получатель — userId. Отправленное сообщение сразу видно обоим участникам через /dialog/{userId}/list. Метод не идемпотентен: повторный запрос создаёт ещё одно сообщение. Нестандартно: успешный ответ — 204 без тела (в OTUS 200); несуществующий получатель — 404 (в OTUS такого ответа нет); сообщение самому себе запрещено (в OTUS это не оговорено); параметр называется userId, а не user_id (camelCase нашего контракта).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Получатель сообщения",
+            "schema": { "$ref": "#/components/schemas/UserId" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SendDialogMessageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Сообщение отправлено" },
+          "400": {
+            "description": "Тело запроса не JSON-объект, userId не является валидным UUID или совпадает с id текущего пользователя (field = \"userId\"), текст не прошёл валидацию (field = \"text\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": {
+            "description": "Пользователь userId не найден",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dialog/{userId}/list": {
+      "get": {
+        "operationId": "listDialogMessages",
+        "summary": "Диалог текущего пользователя с userId",
+        "description": "Сообщения между текущим пользователем (из токена) и userId в обе стороны. Ответ — страница из не более чем limit самых новых сообщений, внутри страницы порядок от старых к новым. Для подгрузки истории при прокрутке следующий запрос передаёт в before значение id первого (самого старого) элемента полученной страницы: вернутся сообщения, идущие в истории раньше него. Страница короче limit означает, что более старых сообщений нет. Нет сообщений (в том числе если пользователя userId не существует) — пустой массив. Нестандартно: пагинация параметрами limit и before и поле id в элементах (в спецификации OTUS метод возвращает диалог целиком, а элементы содержат только from, to и text); диалог с самим собой — 400; параметр называется userId, а не user_id (camelCase нашего контракта).",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Собеседник",
+            "schema": { "$ref": "#/components/schemas/UserId" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Максимальное число сообщений в ответе",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50, "example": 50 }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "description": "Курсор: id сообщения, раньше которого нужна история. Без параметра возвращаются самые новые сообщения диалога.",
+            "schema": { "$ref": "#/components/schemas/DialogMessageId" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Страница диалога от старых сообщений к новым (возможно, пустой список)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DialogMessage" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "userId не является валидным UUID или совпадает с id текущего пользователя (field = \"userId\"), limit не целое число или вышел за допустимые границы (field = \"limit\"), before не является валидным UUID (field = \"before\")",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
     }
   },
   "components": {
@@ -566,6 +664,37 @@
           "id": { "$ref": "#/components/schemas/PostId" },
           "text": { "$ref": "#/components/schemas/PostText" },
           "authorUserId": { "$ref": "#/components/schemas/UserId" }
+        }
+      },
+      "DialogMessageId": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID, регистр не важен (сравнение после lower-casing). Порядок id совпадает с порядком сообщений в истории диалога.",
+        "example": "0199c2a4-5b1e-7c3a-9f21-6d4e8b0a1c57"
+      },
+      "DialogMessageText": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000,
+        "description": "Текст сообщения. Пробелы по краям отбрасываются, после этого текст не пустой; управляющие символы запрещены, кроме перевода строки.",
+        "example": "Привет, как дела?"
+      },
+      "SendDialogMessageRequest": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "$ref": "#/components/schemas/DialogMessageText" }
+        }
+      },
+      "DialogMessage": {
+        "type": "object",
+        "description": "Сообщение диалога. Нестандартно: поле id, которого нет в спецификации OTUS, нужно как курсор для подгрузки истории.",
+        "required": ["id", "from", "to", "text"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/DialogMessageId" },
+          "from": { "$ref": "#/components/schemas/UserId" },
+          "to": { "$ref": "#/components/schemas/UserId" },
+          "text": { "$ref": "#/components/schemas/DialogMessageText" }
         }
       },
       "ErrorResponse": {

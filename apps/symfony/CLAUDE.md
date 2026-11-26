@@ -9,9 +9,11 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `src/Kernel.php`: ядро на `MicroKernelTrait`. Кэш и логи пишет в `APP_VAR_DIR`.
 - `config/`: `bundles.php`, `services.yaml`, `routes.yaml` (атрибуты из `Presentation/Http`), `packages/`.
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
-  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`
-  (копии классов `apps/native`, отличается только namespace: приложения не зависят друг от друга).
-- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` (UUIDv7).
+  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`;
+  для ДЗ «Шардинг диалогов»: `PdoMessageRepository` (кластер Citus). Копии классов `apps/native`, отличается только namespace:
+  приложения не зависят друг от друга.
+- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` и `RandomMessageIdGenerator`
+  (UUIDv7).
 - `src/Infrastructure/Redis/` и `src/Infrastructure/Queue/` (ДЗ «Лента постов»): `RedisConnection`, `RedisKeyspace`, `LuaScript`, `RedisFeedCache`,
   `RedisPostCache`, `FeedEventSerializer`, `RedisFeedEventPublisher`, `RedisFeedEventConsumer`. Копии классов `apps/native`
   (отличаются namespace и префиксом `[symfony]` в логах): те же Lua-скрипты, TTL, длина стрима, таймауты. Описание — в `apps/native/CLAUDE.md`.
@@ -34,6 +36,9 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
   `register` и `login` работают с primary, `search` читает реплики, `get` читает реплики через `PrimaryFallbackUserRepository`
   (свежесозданная анкета может ещё не дойти до реплики). Общего подключения и алиаса `UserRepository` по умолчанию нет:
   новый use case обязан выбрать явно. Подход одинаков в `native` и `symfony`.
+- Диалоги (ДЗ «Шардинг диалогов»): третье подключение `pdo.dialogs` (`DIALOGS_DB_HOST`, координатор Citus; база, пользователь
+  и пароль те же). Репозиторий о шардах не знает, но каждый запрос обязан задавать `dialog_id`, иначе Citus опросит все шарды.
+  `send` проверяет получателя репозиторием `get` (реплика с fallback на primary). Подход одинаков в `native` и `symfony`.
 - Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
   `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
   не действуют (за него отвечает `dns_opt` в compose).
@@ -51,7 +56,8 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - Роутинг чтения и записи ленты (в `services.yaml`, как в `native`): создание, правка, удаление постов, друзья, `GET /post/get/{id}`
   и воркер работают с primary; холодная пересборка ленты и тела постов для страницы ленты читают реплику.
   `redis.connection` постоянное (php-fpm), открывается при первой команде.
-- Маппинг ошибок в `ApiExceptionListener`: поле `friendId` домена в ответе называется `userId` (так зовётся параметр пути).
+- Маппинг ошибок в `ApiExceptionListener`: поля домена `friendId`, `recipientId` и `companionId` в ответе называются `userId`
+  (так зовётся параметр пути).
 - Тесты: `tests/Unit` (разбор Authorization, параметры запроса, маппинг ошибок, 204) без инфраструктуры, `tests/Integration`
   на реальных PostgreSQL и Redis. Сквозная проверка контракта: Postman-коллекция через newman. Проверка контейнера DI:
   `bin/console lint:container` и `cache:warmup` в prod.

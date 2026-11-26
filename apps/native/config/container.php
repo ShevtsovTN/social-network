@@ -13,6 +13,7 @@ use SocialNetwork\Core\Application\ApplyFeedEvent\ApplyFeedEventHandler;
 use SocialNetwork\Core\Application\Authenticate\AuthenticateHandler;
 use SocialNetwork\Core\Application\CreatePost\CreatePostHandler;
 use SocialNetwork\Core\Application\DeletePost\DeletePostHandler;
+use SocialNetwork\Core\Application\GetDialog\GetDialogHandler;
 use SocialNetwork\Core\Application\GetFeed\GetFeedHandler;
 use SocialNetwork\Core\Application\GetPost\GetPostHandler;
 use SocialNetwork\Core\Application\GetUser\GetUserHandler;
@@ -21,10 +22,12 @@ use SocialNetwork\Core\Application\ProcessNextFeedEvent\ProcessNextFeedEventHand
 use SocialNetwork\Core\Application\RegisterUser\RegisterUserHandler;
 use SocialNetwork\Core\Application\RemoveFriend\RemoveFriendHandler;
 use SocialNetwork\Core\Application\SearchUsers\SearchUsersHandler;
+use SocialNetwork\Core\Application\SendMessage\SendMessageHandler;
 use SocialNetwork\Core\Application\UpdatePost\UpdatePostHandler;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoConnectionFactory;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoFeedSource;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoFriendshipRepository;
+use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoMessageRepository;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoPostRepository;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PdoUserRepository;
 use SocialNetwork\NativeApp\Infrastructure\Persistence\PrimaryFallbackUserRepository;
@@ -37,6 +40,7 @@ use SocialNetwork\NativeApp\Infrastructure\Redis\RedisKeyspace;
 use SocialNetwork\NativeApp\Infrastructure\Redis\RedisPostCache;
 use SocialNetwork\NativeApp\Infrastructure\Security\Argon2PasswordHasher;
 use SocialNetwork\NativeApp\Infrastructure\Security\HmacTokenService;
+use SocialNetwork\NativeApp\Infrastructure\Security\RandomMessageIdGenerator;
 use SocialNetwork\NativeApp\Infrastructure\Security\RandomPostIdGenerator;
 use SocialNetwork\NativeApp\Infrastructure\Security\RandomUserIdGenerator;
 use SocialNetwork\NativeApp\Infrastructure\SystemClock;
@@ -45,12 +49,14 @@ use SocialNetwork\NativeApp\Presentation\Http\Auth\RequestAuthenticator;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\CreatePostController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\DeleteFriendController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\DeletePostController;
+use SocialNetwork\NativeApp\Presentation\Http\Controller\GetDialogController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\GetFeedController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\GetPostController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\GetUserController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\LoginController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\RegisterUserController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\SearchUsersController;
+use SocialNetwork\NativeApp\Presentation\Http\Controller\SendMessageController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\SetFriendController;
 use SocialNetwork\NativeApp\Presentation\Http\Controller\UpdatePostController;
 use SocialNetwork\NativeApp\Presentation\Http\Error\ErrorHandler;
@@ -126,6 +132,19 @@ $primaryFriendships = $once(static fn (): PdoFriendshipRepository => new PdoFrie
 $primaryFeedSource = $once(static fn (): PdoFeedSource => new PdoFeedSource($primaryConnection()));
 $replicaFeedSource = $once(static fn (): PdoFeedSource => new PdoFeedSource($replicaConnection()));
 $postIdGenerator = $once(static fn (): RandomPostIdGenerator => new RandomPostIdGenerator());
+
+// Диалоги (ДЗ «Шардинг диалогов»): сообщения лежат в отдельном кластере Citus, приложение знает только координатор.
+// База, пользователь и пароль те же, что у основного PostgreSQL. Получателя сообщения проверяет тот же репозиторий,
+// что и get (реплика с fallback на primary): так отправка сообщений меньше нагружает primary.
+$dialogsConnection = $once(static fn (): PDO => PdoConnectionFactory::create(
+    $requireEnv('DIALOGS_DB_HOST'),
+    $requireEnv('DIALOGS_DB_PORT'),
+    $requireEnv('DB_NAME'),
+    $requireEnv('DB_USER'),
+    $requireEnv('DB_PASSWORD'),
+));
+$messages = $once(static fn (): PdoMessageRepository => new PdoMessageRepository($dialogsConnection()));
+$messageIdGenerator = $once(static fn (): RandomMessageIdGenerator => new RandomMessageIdGenerator());
 
 // Redis: кэш ленты и очередь событий. Ключи, стрим и группа с префиксом приложения: native и symfony не делят данные.
 // Подключение постоянное (php-fpm), открывается при первой команде, а не при сборке контроллера.
@@ -223,6 +242,15 @@ $router = new Router([
     new Route('GET', '/post/feed', static fn (): GetFeedController => new GetFeedController(
         $requestAuthenticator(),
         new GetFeedHandler($feedCache(), $replicaFeedSource(), $postCache(), $replicaPosts()),
+    )),
+    // Диалоги. Отступления от OTUS заданы контрактом: {userId}, send отвечает 204, у list пагинация limit/before и поле id.
+    new Route('POST', '/dialog/{userId}/send', static fn (): SendMessageController => new SendMessageController(
+        $requestAuthenticator(),
+        new SendMessageHandler($replicaUsersWithPrimaryFallback(), $messages(), $messageIdGenerator(), $clock()),
+    )),
+    new Route('GET', '/dialog/{userId}/list', static fn (): GetDialogController => new GetDialogController(
+        $requestAuthenticator(),
+        new GetDialogHandler($messages()),
     )),
 ]);
 

@@ -1,7 +1,7 @@
 COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read explain-feed bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure seed-posts-file seed-feed reset-feed bench-feed-readers bench-feed bench-fanout
+.PHONY: help init up down debug-on debug-off build logs ps install test-core test-native test-symfony console bench-up bench-down bench-get compare reset-db seed monitoring-up monitoring-down repl-rebuild repl-failover repl-status repl-sync repl-async bench-write bench-search-queries bench-search bench-get-ids bench-read explain-feed bench-plot redis-cli redis-flush worker-restart worker-logs compare-infrastructure dialogs-psql dialogs-status dialogs-migrate seed-posts-file seed-feed reset-feed bench-feed-readers bench-feed bench-fanout seed-dialogs dialogs-rebuild dialogs-skew bench-dialog-users bench-dialog-reshard bench-dialog-scale bench-dialog-plot
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -14,7 +14,7 @@ up: ## Запустить стек в режиме разработки (bind mo
 	$(COMPOSE) up -d --build
 
 down: ## Остановить стек
-	$(COMPOSE) down
+	$(COMPOSE) --profile reshard down
 
 debug-on: ## Включить Xdebug (mode=debug), пересоздаёт php и nginx
 	XDEBUG_MODE=debug $(COMPOSE) up -d --force-recreate --no-deps php-native php-symfony nginx-native nginx-symfony
@@ -52,7 +52,7 @@ bench-up: ## Стек для замеров (target bench, без bind mount, б
 	PHP_BUILD_TARGET=bench $(COMPOSE) -f docker-compose.yaml up -d --build --remove-orphans
 
 bench-down: ## Остановить стек замеров
-	PHP_BUILD_TARGET=bench $(COMPOSE) -f docker-compose.yaml down
+	PHP_BUILD_TARGET=bench $(COMPOSE) -f docker-compose.yaml --profile reshard down
 
 bench-get: ## Замер GET /user/get/{id} в обоих приложениях (после make bench-up): make bench-get CONCURRENCY=32 DURATION=15
 	./social-network-docker/bench/get.sh
@@ -134,6 +134,39 @@ worker-restart: ## Перезапустить воркеры ленты (пос�
 worker-logs: ## Логи воркеров ленты
 	$(COMPOSE) logs -f --tail=100 worker-native worker-symfony
 
+dialogs-psql: ## Консоль psql на координаторе кластера диалогов (Citus)
+	$(COMPOSE) exec dialogs-coordinator sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+
+dialogs-status: ## Кластер диалогов: узлы, число и размер шардов на каждом воркере
+	$(COMPOSE) exec -T dialogs-coordinator sh -c 'psql -X -q -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f -' \
+		< social-network-docker/citus/status.sql
+
+dialogs-migrate: ## Зарегистрировать воркеры и применить новые миграции из db/dialogs/migrations (при up выполняется само)
+	$(COMPOSE) run --rm dialogs-init
+
+seed-dialogs: ## Засеять диалоги: 2 млн сообщений с «Леди Гагой» и горячим диалогом (нужен make seed; добавляется к имеющимся)
+	./db/dialogs/seed/seed-dialogs.sh
+
+dialogs-rebuild: ## Кластер диалогов с нуля и новый сид: УДАЛЯЕТ все сообщения (нужно перед повторным решардингом)
+	./social-network-docker/citus/rebuild.sh
+
+dialogs-skew: ## Распределение сообщений по воркерам при ключах dialog_id и sender_id («эффект Леди Гаги»)
+	./social-network-docker/bench/dialog-skew.sh
+
+bench-dialog-users: ## Выгрузить пары участников с токенами для нагрузки на диалоги (dialog-users.csv, нужен make seed-dialogs)
+	./social-network-docker/bench/dialog-users.sh
+
+bench-dialog-plot: ## График решардинга по итогам прогонов reshard и reshard-repeat в docs/homework-sharding/img/
+	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
+	docker run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/social-network-docker/bench/plot":/scripts:ro \
+		-v "$(CURDIR)/docs/homework-sharding":/report --entrypoint python social-network-bench-plot /scripts/dialog.py /report
+
+bench-dialog-reshard: ## Решардинг под нагрузкой k6: make bench-dialog-reshard [PHASE=reshard] [APP=native] [SEND_RPS=400] [LIST_RPS=200]
+	./social-network-docker/bench/dialog-reshard.sh
+
+bench-dialog-scale: ## Пропускная способность записи при 2, 3 и 4 воркерах (pgbench на отдельном одноразовом кластере)
+	./social-network-docker/bench/dialog-scale.sh
+
 seed-posts-file: ## Скачать posts.txt (тексты постов из ДЗ OTUS, около 6 МБ) в db/seed/ для make seed-feed (в git не хранится)
 	curl -fsSL -o db/seed/posts.txt https://raw.githubusercontent.com/OtusTeam/highload/master/homework/posts.txt
 
@@ -145,4 +178,4 @@ reset-feed: ## Очистить friendships и posts и сбросить Redis (
 	$(COMPOSE) exec -T redis redis-cli FLUSHALL
 
 reset-db: ## Остановить стек и удалить данные БД (миграции применятся заново при следующем up)
-	$(COMPOSE) down -v
+	$(COMPOSE) --profile reshard down -v

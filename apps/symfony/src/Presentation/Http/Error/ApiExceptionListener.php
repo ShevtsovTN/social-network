@@ -6,6 +6,7 @@ namespace SocialNetwork\SymfonyApp\Presentation\Http\Error;
 
 use SocialNetwork\Core\Application\Authenticate\Unauthenticated;
 use SocialNetwork\Core\Application\Login\InvalidCredentials;
+use SocialNetwork\Core\Domain\Dialog\InvalidDialogData;
 use SocialNetwork\Core\Domain\Feed\InvalidFeedPage;
 use SocialNetwork\Core\Domain\Friend\InvalidFriendship;
 use SocialNetwork\Core\Domain\Post\InvalidPostData;
@@ -29,9 +30,10 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final class ApiExceptionListener
 {
     /**
-     * Поля домена, которые в запросе называются иначе: идентификатор друга приходит параметром пути userId.
+     * Поля домена, которые в запросе называются иначе: идентификаторы друга, получателя и собеседника
+     * приходят параметром пути userId.
      */
-    private const array FIELD_ALIASES = ['friendId' => 'userId'];
+    private const array FIELD_ALIASES = ['friendId' => 'userId', 'recipientId' => 'userId', 'companionId' => 'userId'];
 
     public function __invoke(ExceptionEvent $event): void
     {
@@ -40,7 +42,8 @@ final class ApiExceptionListener
 
         $event->setResponse(match (true) {
             $exception instanceof InvalidUserData,
-            $exception instanceof InvalidFriendship => new ApiJsonResponse(400, [
+            $exception instanceof InvalidFriendship,
+            $exception instanceof InvalidDialogData => new ApiJsonResponse(400, [
                 'message' => $exception->getMessage(),
                 'field' => self::FIELD_ALIASES[$exception->field] ?? $exception->field,
             ]),

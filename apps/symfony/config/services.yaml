@@ -84,6 +84,29 @@ services:
   SocialNetwork\Core\Application\Port\PostIdGenerator:
     alias: SocialNetwork\SymfonyApp\Infrastructure\Security\RandomPostIdGenerator
 
+  # --- Диалоги (ДЗ «Шардинг диалогов») ---
+  # Сообщения лежат в отдельном кластере Citus, приложение знает только координатор. База, пользователь и пароль те же,
+  # что у основного PostgreSQL.
+  pdo.dialogs:
+    class: PDO
+    factory: ['SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoConnectionFactory', 'create']
+    arguments:
+      - '%env(DIALOGS_DB_HOST)%'
+      - '%env(DIALOGS_DB_PORT)%'
+      - '%env(DB_NAME)%'
+      - '%env(DB_USER)%'
+      - '%env(DB_PASSWORD)%'
+
+  SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoMessageRepository:
+    arguments:
+      $connection: '@pdo.dialogs'
+  SocialNetwork\Core\Application\Port\MessageRepository:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Persistence\PdoMessageRepository
+
+  SocialNetwork\SymfonyApp\Infrastructure\Security\RandomMessageIdGenerator: ~
+  SocialNetwork\Core\Application\Port\MessageIdGenerator:
+    alias: SocialNetwork\SymfonyApp\Infrastructure\Security\RandomMessageIdGenerator
+
   # Redis: кэш ленты и очередь событий. Ключи, стрим и группа с префиксом приложения: native и symfony не делят данные.
   # Подключение постоянное (php-fpm), открывается при первой команде, а не при сборке сервиса.
   redis.connection:
@@ -246,6 +269,17 @@ services:
   SocialNetwork\Core\Application\GetFeed\GetFeed:
     alias: SocialNetwork\Core\Application\GetFeed\GetFeedHandler
 
+  # Получателя сообщения проверяет тот же репозиторий, что и get (реплика с fallback на primary):
+  # так отправка сообщений меньше нагружает primary.
+  SocialNetwork\Core\Application\SendMessage\SendMessageHandler:
+    arguments:
+      $users: '@repository.user.replica_with_primary_fallback'
+  SocialNetwork\Core\Application\SendMessage\SendMessage:
+    alias: SocialNetwork\Core\Application\SendMessage\SendMessageHandler
+  SocialNetwork\Core\Application\GetDialog\GetDialogHandler: ~
+  SocialNetwork\Core\Application\GetDialog\GetDialog:
+    alias: SocialNetwork\Core\Application\GetDialog\GetDialogHandler
+
   SocialNetwork\Core\Application\ApplyFeedEvent\ApplyFeedEventHandler:
     arguments:
       $posts: '@repository.post.primary'
@@ -272,6 +306,8 @@ services:
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\DeletePostController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetPostController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetFeedController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\SendMessageController: ~
+  SocialNetwork\SymfonyApp\Presentation\Http\Controller\GetDialogController: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Error\ApiExceptionListener: ~
   SocialNetwork\SymfonyApp\Presentation\Http\Routing\StrictRoutingListener: ~
   SocialNetwork\SymfonyApp\Presentation\Console\FeedWorkerCommand: ~

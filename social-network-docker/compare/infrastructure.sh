@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Сверка Infrastructure ленты постов в apps/native и apps/symfony (make compare-infrastructure).
+# Сверка Infrastructure ленты постов и диалогов в apps/native и apps/symfony (make compare-infrastructure).
 #
 # Приложения не зависят друг от друга, поэтому эти классы существуют в двух копиях. По правилам проекта реализации
 # эквивалентны по подходу (одни и те же запросы, Lua-скрипты, TTL, таймауты), иначе нагрузочное сравнение сравнивает
@@ -37,6 +37,10 @@ files=(
     tests/Integration/RedisFeedCacheBehaviourTest.php
     tests/Integration/RedisFeedEventConsumerBehaviourTest.php
     tests/Integration/FeedFlowTest.php
+    src/Infrastructure/Persistence/PdoMessageRepository.php
+    src/Infrastructure/Security/RandomMessageIdGenerator.php
+    tests/Integration/PdoMessageRepositoryTest.php
+    tests/Integration/RandomMessageIdGeneratorTest.php
 )
 
 normalize() {

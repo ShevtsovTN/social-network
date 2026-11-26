@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7f2d9b2a-6a8b-4c93-8b1a-4b7b9e2e2a31",
     "name": "Social Network API",
-    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты, поиск анкет, друзья, посты и лента постов друзей. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user → Search users → Second user → Posts → Friends → Feed. Login, Get user и Search users используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции). Папки Posts, Friends и Feed используют второго пользователя (Second user) как друга: его пост создаётся до дружбы и должен попасть в ленту первого пользователя после /friend/set.\n\nЛента итогово согласована (асинхронный fan-out через Redis Streams), поэтому запросы ленты в pre-request скрипте опрашивают её до 10 секунд, пока ожидаемое состояние не наступит.\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
+    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты, поиск анкет, друзья, посты, лента постов друзей и диалоги. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user → Search users → Second user → Posts → Friends → Feed → Dialog. Login, Get user и Search users используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции). Папки Posts, Friends и Feed используют второго пользователя (Second user) как друга: его пост создаётся до дружбы и должен попасть в ленту первого пользователя после /friend/set.\n\nПапка Dialog использует обоих пользователей: проверяет отправку в обе стороны, пагинацию по курсору before и ошибки.\n\nЛента итогово согласована (асинхронный fan-out через Redis Streams), поэтому запросы ленты в pre-request скрипте опрашивают её до 10 секунд, пока ожидаемое состояние не наступит.\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -23,6 +23,8 @@
     {"key": "ownPostId", "value": "", "type": "string"},
     {"key": "newestPostId", "value": "", "type": "string"},
     {"key": "longText", "value": "", "type": "string"},
+    {"key": "dialogCursor", "value": "", "type": "string"},
+    {"key": "dialogMessages", "value": "", "type": "string"},
     {"key": "invalidToken", "value": "invalid.token", "type": "string"}
   ],
   "item": [
@@ -3352,6 +3354,1334 @@
                 "post",
                 "delete",
                 "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dialog",
+      "item": [
+        {
+          "name": "Dialog send - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "pm.test('has no body', function () {",
+                  "    pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Привет, как дела?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - reply from the recipient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "pm.test('has no body', function () {",
+                  "    pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{userId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{userId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Хорошо, а у тебя?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - both directions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const messages = pm.response.json();",
+                  "const first = pm.collectionVariables.get('userId').toLowerCase();",
+                  "const second = pm.collectionVariables.get('secondUserId').toLowerCase();",
+                  "",
+                  "pm.test('contains both directions, oldest first', function () {",
+                  "    pm.expect(messages).to.be.an('array').with.lengthOf(2);",
+                  "    pm.expect(messages.map(function (message) { return [message.from, message.to, message.text]; })).to.eql([",
+                  "        [first, second, 'Привет, как дела?'],",
+                  "        [second, first, 'Хорошо, а у тебя?']",
+                  "    ]);",
+                  "});",
+                  "",
+                  "pm.test('every message has exactly id, from, to and text', function () {",
+                  "    messages.forEach(function (message) {",
+                  "        pm.expect(message).to.have.all.keys('id', 'from', 'to', 'text');",
+                  "        pm.expect(message.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('ids grow with history', function () {",
+                  "    pm.expect(messages[0].id < messages[1].id).to.be.true;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('dialogMessages', JSON.stringify(messages));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - same dialog for the other participant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('is identical to the dialog seen by the first user', function () {",
+                  "    pm.expect(pm.response.json()).to.eql(JSON.parse(pm.collectionVariables.get('dialogMessages')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{userId}}/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{userId}}",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - text is trimmed and keeps line breaks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "pm.test('has no body', function () {",
+                  "    pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"  Первая строка\\r\\nВторая строка  \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - limit returns the newest messages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const page = pm.response.json();",
+                  "",
+                  "pm.test('two newest messages, oldest first', function () {",
+                  "    pm.expect(page.map(function (message) { return message.text; })).to.eql([",
+                  "        'Хорошо, а у тебя?',",
+                  "        'Первая строка\\nВторая строка'",
+                  "    ]);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('dialogCursor', page[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?limit=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - before returns the older page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('only the first message is older than the cursor', function () {",
+                  "    const page = pm.response.json();",
+                  "    pm.expect(page).to.have.lengthOf(1);",
+                  "    pm.expect(page[0].text).to.eql('Привет, как дела?');",
+                  "    pm.collectionVariables.set('dialogCursor', page[0].id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?limit=2&before={{dialogCursor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "2"
+                },
+                {
+                  "key": "before",
+                  "value": "{{dialogCursor}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - before the oldest message is empty",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('is an empty array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?before={{dialogCursor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "before",
+                  "value": "{{dialogCursor}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - unknown user is an empty dialog",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('is an empty array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/99999999-9999-4999-8999-999999999999/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "99999999-9999-4999-8999-999999999999",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - to yourself",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{userId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{userId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Привет\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - malformed userId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/not-a-uuid/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "not-a-uuid",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Привет\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - unknown user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/99999999-9999-4999-8999-999999999999/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "99999999-9999-4999-8999-999999999999",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Привет\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - empty text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - blank text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - text too long",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('longText', 'a'.repeat(2001));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{longText}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - missing text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Привет\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog send - invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{invalidToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Привет\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - with yourself",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{userId}}/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{userId}}",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - malformed userId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/not-a-uuid/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "not-a-uuid",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - zero limit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field limit', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('limit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?limit=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - limit above 100",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field limit', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('limit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?limit=101",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "101"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - non-numeric limit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field limit', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('limit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?limit=abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "abc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - malformed before",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field before', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('before');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list?before=not-a-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "before",
+                  "value": "not-a-uuid"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dialog list - invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{invalidToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dialog/{{secondUserId}}/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dialog",
+                "{{secondUserId}}",
+                "list"
               ]
             }
           },
