@@ -32,4 +32,26 @@ final readonly class QueryParameters
 
         return $value;
     }
+
+    /**
+     * Необязательный параметр: null, если его нет; строка, если он передан строкой.
+     *
+     * @param string $field имя поля в терминах домена для ответа об ошибке
+     *
+     * @throws MalformedRequest если параметр передан не строкой (например, offset[]=1)
+     */
+    public function optionalString(string $name, string $field): ?string
+    {
+        if (!array_key_exists($name, $this->parameters)) {
+            return null;
+        }
+
+        $value = $this->parameters[$name];
+
+        if (!is_string($value)) {
+            throw MalformedRequest::forField($field, sprintf('%s must be a string.', $name));
+        }
+
+        return $value;
+    }
 }

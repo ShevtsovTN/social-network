@@ -5,14 +5,22 @@
 
 # Версии образов закреплены для воспроизводимых замеров; обновлять осознанно, вместе с README.
 ARG PHP_VERSION=8.4.26
+# phpredis: клиент Redis для ленты постов (ДЗ «Лента постов»). Расширение, а не composer-пакет.
+ARG PHPREDIS_VERSION=6.3.0
 
 FROM php:${PHP_VERSION}-fpm-alpine3.24 AS base
 
+ARG PHPREDIS_VERSION
+
+# Опции pecl заданы явно (без igbinary, lzf, zstd, msgpack, lz4), иначе сборка ждёт ответа на вопросы.
 RUN set -eux; \
     apk add --no-cache libpq unzip; \
     apk add --no-cache --virtual .build-deps postgresql-dev $PHPIZE_DEPS; \
     docker-php-ext-install -j"$(nproc)" pdo_pgsql opcache; \
-    apk del .build-deps
+    pecl install -D 'enable-redis-igbinary="no" enable-redis-lzf="no" enable-redis-zstd="no" enable-redis-msgpack="no" enable-redis-lz4="no"' "redis-${PHPREDIS_VERSION}"; \
+    docker-php-ext-enable redis; \
+    apk del .build-deps; \
+    rm -rf /tmp/pear
 
 COPY --from=composer:2.10.3 /usr/bin/composer /usr/bin/composer
 

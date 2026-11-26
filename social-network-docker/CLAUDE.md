@@ -11,7 +11,9 @@
   Лимиты CPU и памяти узлов БД задаются в compose (`POSTGRES_CPUS`, `POSTGRES_MEMORY`) и одинаковы у всех узлов.
 - `bench/`: генераторы нагрузки (`load.php` для `make bench-get`, сценарии k6 `search.js` для `make bench-search`,
   `get.js`/`search.js` для `make bench-read`, `write.js` для `make bench-write`), набор запросов поиска `search-queries.csv`,
-  список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится),
+  список id `get-ids.csv` (генерируется `make bench-get-ids`, в git не хранится), для ленты постов `feed.sh`/`feed.js`/`post.js`
+  (`make bench-feed`; фаза nocache блокирует Redis сменой пароля, а не остановкой: остановленный контейнер даёт секунду на DNS),
+  `fanout-latency.sh` (`make bench-fanout`) и `explain-feed.sql` (`make explain-feed`),
   образ для графиков `plot/` (matplotlib). В приложения не входят.
 - `replication/`: операционные скрипты репликации: `status.sh` (`make repl-status`), `sync-mode.sh` (`make repl-sync`,
   `make repl-async`: кворумная синхронная репликация `ANY 1 (replica1, replica2)` и обратно). Штатный режим кластера: async.
@@ -21,9 +23,21 @@
   экспериментом, потому что прежний primary после аварии потерян). Эксперимент разрушает primary и тома БД.
 - `netem/`: образ с tc (iproute2) для netem; запускается рядом с узлом (`--net container:...`, `NET_ADMIN`), только для экспериментов.
 - `haproxy/`: `haproxy.cfg` для балансировки чтения между репликами (tcp, roundrobin, `pgsql-check`; статистика и `/metrics` на :8404).
+- `redis/`: `redis.conf` (ДЗ «Лента постов»): без персистентности (`save ""`, `appendonly no`), `maxmemory-policy volatile-lru`.
+  `maxmemory` и пароль задаются в compose (`REDIS_MAXMEMORY`, `REDIS_PASSWORD`), лимиты контейнера `REDIS_CPUS`/`REDIS_MEMORY`.
+  Один сервис `redis` на оба приложения; ключи, стрим и consumer group разделяет `REDIS_KEY_PREFIX` (`native`, `symfony`).
+  `make redis-cli`, `make redis-flush`. Воркеры ленты `worker-native` (`php bin/feed-worker.php`) и `worker-symfony`
+  (`php bin/console feed:work`, `user: www-data`: консоль от root оставила бы в `APP_VAR_DIR` файлы, которые php-fpm не перезапишет)
+  на образе и коде приложения: `init: true`, `restart: unless-stopped`, лимиты 1 CPU и 256 МБ у обоих; входят в `make up` и
+  `make bench-up`; `make worker-restart`, `make worker-logs`. В dev воркер Symfony работает с `APP_ENV=dev`, как `php-symfony`.
 - `monitoring/`: `prometheus.yml` и провижининг Grafana (datasource, дашборды в `grafana/dashboards/`). Сервисы
-  (Prometheus, postgres_exporter ×3, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
-  в обычный `make up` не входят. Экспортёр ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`).
+  (Prometheus, postgres_exporter ×3, redis_exporter, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
+  в обычный `make up` не входят. postgres_exporter ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`), redis_exporter
+  основным паролем Redis; стримы событий для него перечислены в compose (`REDIS_EXPORTER_CHECK_SINGLE_STREAMS`, имена
+  `<REDIS_KEY_PREFIX>:feed-events`: при смене префиксов поправить). Панель ленты: `grafana/dashboards/feed-redis.json`.
+  Пока `make bench-feed` держит фазу nocache (пароль Redis сменён), экспортёр не может войти, и метрики Redis пропадают.
+- `compare/`: `compare.php` (`make compare`, сверка HTTP-ответов native и symfony, включая друзей, посты и ленту) и `infrastructure.sh`
+  (`make compare-infrastructure`, сверка Infrastructure ленты в двух копиях после нормализации namespace).
 - `docker-compose.yaml`, `docker-compose.override.yaml` и `.env` лежат в корне репозитория, не здесь.
 
 ## Правила
@@ -45,6 +59,8 @@
 - У php-контейнеров короткие таймауты резолвера (`dns_opt: timeout:1, attempts:1`): имя убитого контейнера Docker
   разрешает 5 секунд, libpq пробует дважды, и воркеры php-fpm висели бы 10 секунд на каждой попытке подключения
   к мёртвому primary (чтение через то же приложение вставало в очередь). Имена живых контейнеров разрешаются мгновенно.
+- Redis не источник истины: данные ключей с TTL вытесняются, стрим без TTL ограничивается `MAXLEN ~` на стороне приложения.
+  Клиент phpredis ставится в `base` образа PHP (`PHPREDIS_VERSION`), версия расширения закреплена.
 - Версии базовых образов зафиксированы (без `latest`).
 - Nginx не получает код приложений. Он только проксирует в php-fpm.
 - Контейнеры не запускаются от root, если это не требуется для работы

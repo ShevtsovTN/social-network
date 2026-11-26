@@ -1,0 +1,91 @@
+== Данные ==
+читатель 0012325a-6c9f-4d6e-9289-e4c3c854bde6, 20 друзей
+обычный автор 0029713d-2bfd-414e-a586-438f15f2066e, 20 подписчиков, постов 6
+«знаменитость» 1418cfc7-0cb2-40ce-ab8e-dc04c41d03b1, подписчиков 32011, постов 494
+ server_version | shared_buffers | work_mem 
+----------------+----------------+----------
+ 17.10          | 256MB          | 4MB
+(1 row)
+
+
+== 1. followerIdsOf: подписчики обычного автора (fan-out нового поста), LIMIT 500 ==
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..5.13 rows=40 width=16) (actual time=0.005..0.008 rows=20 loops=1)
+   Buffers: shared hit=5
+   ->  Index Only Scan using friendships_friend_id_user_id_idx on friendships  (cost=0.43..5.13 rows=40 width=16) (actual time=0.005..0.007 rows=20 loops=1)
+         Index Cond: (friend_id = '0029713d-2bfd-414e-a586-438f15f2066e'::uuid)
+         Heap Fetches: 0
+         Buffers: shared hit=5
+ Planning Time: 0.019 ms
+ Execution Time: 0.013 ms
+(8 rows)
+
+
+== 2. followerIdsOf: первая страница подписчиков «знаменитости», LIMIT 500 ==
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..21.37 rows=500 width=16) (actual time=0.006..0.053 rows=500 loops=1)
+   Buffers: shared hit=7
+   ->  Index Only Scan using friendships_friend_id_user_id_idx on friendships  (cost=0.43..1305.67 rows=31157 width=16) (actual time=0.006..0.030 rows=500 loops=1)
+         Index Cond: (friend_id = '1418cfc7-0cb2-40ce-ab8e-dc04c41d03b1'::uuid)
+         Heap Fetches: 0
+         Buffers: shared hit=7
+ Planning Time: 0.009 ms
+ Execution Time: 0.068 ms
+(8 rows)
+
+
+== 3. latestFromFriends: сборка ленты читателя при промахе кэша, LIMIT 1000 ==
+                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=162.36..163.86 rows=597 width=24) (actual time=0.193..0.245 rows=703 loops=1)
+   Buffers: shared hit=541
+   ->  Sort  (cost=162.36..163.86 rows=597 width=24) (actual time=0.193..0.212 rows=703 loops=1)
+         Sort Key: p.created_at DESC, p.id DESC
+         Sort Method: quicksort  Memory: 74kB
+         Buffers: shared hit=541
+         ->  Nested Loop  (cost=0.85..134.84 rows=597 width=24) (actual time=0.013..0.131 rows=703 loops=1)
+               Buffers: shared hit=541
+               ->  Index Only Scan using friendships_pkey on friendships f  (cost=0.43..4.90 rows=27 width=16) (actual time=0.005..0.006 rows=20 loops=1)
+                     Index Cond: (user_id = '0012325a-6c9f-4d6e-9289-e4c3c854bde6'::uuid)
+                     Heap Fetches: 0
+                     Buffers: shared hit=4
+               ->  Index Only Scan using posts_author_id_created_at_id_idx on posts p  (cost=0.43..4.67 rows=14 width=40) (actual time=0.001..0.004 rows=35 loops=20)
+                     Index Cond: (author_id = f.friend_id)
+                     Heap Fetches: 0
+                     Buffers: shared hit=537
+ Planning:
+   Buffers: shared hit=16
+ Planning Time: 0.108 ms
+ Execution Time: 0.279 ms
+(20 rows)
+
+
+== 4. latestByAuthor: backfill после /friend/set (обычный автор), LIMIT 1000 ==
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..4.67 rows=14 width=24) (actual time=0.013..0.015 rows=6 loops=1)
+   Buffers: shared hit=8
+   ->  Index Only Scan using posts_author_id_created_at_id_idx on posts  (cost=0.43..4.67 rows=14 width=24) (actual time=0.012..0.014 rows=6 loops=1)
+         Index Cond: (author_id = '0029713d-2bfd-414e-a586-438f15f2066e'::uuid)
+         Heap Fetches: 0
+         Buffers: shared hit=8
+ Planning Time: 0.040 ms
+ Execution Time: 0.026 ms
+(8 rows)
+
+
+== 5. latestByAuthor: backfill «знаменитости», LIMIT 1000 ==
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..25.91 rows=542 width=24) (actual time=0.004..0.071 rows=494 loops=1)
+   Buffers: shared hit=339
+   ->  Index Only Scan using posts_author_id_created_at_id_idx on posts  (cost=0.43..25.91 rows=542 width=24) (actual time=0.003..0.048 rows=494 loops=1)
+         Index Cond: (author_id = '1418cfc7-0cb2-40ce-ab8e-dc04c41d03b1'::uuid)
+         Heap Fetches: 0
+         Buffers: shared hit=339
+ Planning Time: 0.011 ms
+ Execution Time: 0.087 ms
+(8 rows)
+

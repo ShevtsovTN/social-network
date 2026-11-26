@@ -6,3 +6,6 @@
 **/.phpunit.cache/
 **/.phpunit.result.cache
 apps/symfony/var/
+
+# Пробные прогоны харнесса замеров ленты (make bench-feed PHASE=smoke) в репозиторий не попадают.
+docs/homework-feed/results/smoke/

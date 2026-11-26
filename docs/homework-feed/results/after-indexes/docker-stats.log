@@ -1,0 +1,1846 @@
+11:36:14
+# warm native c1
+11:50:24
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=56.47% mem=21.17MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=12.29% mem=104.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.97% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.96% mem=500.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.90% mem=306.2MiB / 1GiB
+social-network-postgres-1 cpu=1.58% mem=419.3MiB / 1GiB
+11:50:32
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=56.77% mem=20.85MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=13.09% mem=111.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.89% mem=31.48MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.97% mem=504.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.52% mem=310.1MiB / 1GiB
+social-network-postgres-1 cpu=0.01% mem=419.3MiB / 1GiB
+11:50:39
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=56.55% mem=20.86MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=12.07% mem=118.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.70% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.19% mem=507.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.64% mem=311.3MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:50:47
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=57.68% mem=20.94MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=13.17% mem=126MiB / 512MiB
+social-network-haproxy-1 cpu=0.68% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.03% mem=510.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.70% mem=315.9MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:50:54
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=57.77% mem=20.96MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=12.29% mem=131.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.65% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.15% mem=522.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.86% mem=320.2MiB / 1GiB
+social-network-postgres-1 cpu=1.63% mem=419.6MiB / 1GiB
+11:51:02
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=57.05% mem=21.09MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=14.05% mem=137.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.66% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.12% mem=531.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.35% mem=333.9MiB / 1GiB
+social-network-postgres-1 cpu=0.01% mem=419.3MiB / 1GiB
+# warm native c10
+11:51:09
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=207.33% mem=21.19MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.54% mem=148.6MiB / 512MiB
+social-network-haproxy-1 cpu=1.99% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.96% mem=541.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.57% mem=349.3MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:51:17
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=203.91% mem=20.89MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.42% mem=160MiB / 512MiB
+social-network-haproxy-1 cpu=1.57% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.28% mem=545.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.62% mem=370.1MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:51:24
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.72% mem=20.9MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.043MiB / 256MiB
+social-network-redis-1 cpu=38.67% mem=169.4MiB / 512MiB
+social-network-haproxy-1 cpu=1.20% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=3.34% mem=546.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.30% mem=372MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:51:32
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=205.84% mem=21.31MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.87% mem=175.5MiB / 512MiB
+social-network-haproxy-1 cpu=0.86% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.69% mem=547.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.14% mem=374.3MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:51:39
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.48% mem=20.95MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=37.83% mem=179.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.64% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.67% mem=548.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.79% mem=375MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:51:47
+# warm native c50
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=203.63% mem=20.81MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.26% mem=182.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.54% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.61% mem=548.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.96% mem=376.4MiB / 1GiB
+social-network-postgres-1 cpu=1.56% mem=419.3MiB / 1GiB
+11:51:54
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=205.67% mem=21.48MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=38.37% mem=185.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.48% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.51% mem=549.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.62% mem=376.6MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:52:02
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.05% mem=20.93MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.53% mem=186.8MiB / 512MiB
+social-network-haproxy-1 cpu=0.37% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.26% mem=549.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.86% mem=377.5MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:52:10
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=203.88% mem=21.07MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=37.78% mem=188MiB / 512MiB
+social-network-haproxy-1 cpu=0.24% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.56% mem=549.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.42% mem=377.9MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:52:17
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.50% mem=20.82MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=38.91% mem=188.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.23% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.64% mem=549.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.61% mem=378.7MiB / 1GiB
+social-network-postgres-1 cpu=0.28% mem=419.3MiB / 1GiB
+11:52:25
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=205.75% mem=21.43MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=37.94% mem=189.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.17% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.52% mem=549.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.43% mem=381MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+# warm native c100
+11:52:32
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.36% mem=20.93MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=38.35% mem=190.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.21% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.65% mem=549.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.87% mem=384.4MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:52:40
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=144.73% mem=20.8MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=29.48% mem=190.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.06% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.17% mem=550MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.08% mem=384.8MiB / 1GiB
+social-network-postgres-1 cpu=1.48% mem=419.3MiB / 1GiB
+11:52:48
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.75% mem=21.39MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.51% mem=191.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.05% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.28% mem=550MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.22% mem=384.8MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:52:56
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=206.21% mem=21.42MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=37.97% mem=191.5MiB / 512MiB
+social-network-haproxy-1 cpu=0.02% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.07% mem=550MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.00% mem=384.8MiB / 1GiB
+social-network-postgres-1 cpu=1.42% mem=419.3MiB / 1GiB
+11:53:03
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.64MiB / 256MiB
+social-network-php-native-1 cpu=205.42% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-redis-1 cpu=39.05% mem=190.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.02% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.00% mem=550MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.45% mem=384.8MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:53:11
+social-network-php-symfony-1 cpu=88.22% mem=26.71MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.73MiB / 512MiB
+social-network-redis-1 cpu=49.82% mem=41.22MiB / 512MiB
+social-network-haproxy-1 cpu=8.10% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=10.92% mem=551MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=30.49% mem=385.3MiB / 1GiB
+social-network-postgres-1 cpu=2.83% mem=419.3MiB / 1GiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+# warm symfony c1
+11:53:19
+social-network-php-symfony-1 cpu=78.63% mem=25.67MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.73MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=7.15% mem=105MiB / 512MiB
+social-network-haproxy-1 cpu=0.45% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.16% mem=552MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.17% mem=418.9MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:53:27
+social-network-php-symfony-1 cpu=79.01% mem=25.64MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=7.20% mem=109.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.43% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.55% mem=551.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.44% mem=429.6MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.4MiB / 1GiB
+11:53:34
+social-network-php-symfony-1 cpu=79.50% mem=25.83MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=6.69% mem=114.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.61% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.17% mem=552MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.52% mem=442.4MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:53:42
+social-network-php-symfony-1 cpu=78.42% mem=25.47MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=6.99% mem=119.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.43% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.68% mem=551.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.30% mem=448.2MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:53:49
+social-network-php-symfony-1 cpu=77.85% mem=25.48MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=7.18% mem=124.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.42% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.82% mem=551.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.49% mem=451MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+# warm symfony c10
+11:53:57
+social-network-php-symfony-1 cpu=201.81% mem=25.34MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.41% mem=129.6MiB / 512MiB
+social-network-haproxy-1 cpu=1.18% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.96% mem=551.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=3.13% mem=453.6MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:54:04
+social-network-php-symfony-1 cpu=203.19% mem=25.38MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=16.92% mem=136.3MiB / 512MiB
+social-network-haproxy-1 cpu=1.13% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.68% mem=551.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.95% mem=463.5MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:54:12
+social-network-php-symfony-1 cpu=203.95% mem=26.11MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=16.81% mem=142.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.93% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.84% mem=552MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.50% mem=476.5MiB / 1GiB
+social-network-postgres-1 cpu=0.01% mem=419.3MiB / 1GiB
+11:54:19
+social-network-php-symfony-1 cpu=202.32% mem=25.32MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.09% mem=147.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.83% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.46% mem=552.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.13% mem=489.2MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:54:27
+social-network-php-symfony-1 cpu=202.25% mem=25.31MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=16.72% mem=151.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.82% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.69% mem=552MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.16% mem=496MiB / 1GiB
+social-network-postgres-1 cpu=1.67% mem=419.3MiB / 1GiB
+11:54:35
+social-network-php-symfony-1 cpu=204.69% mem=25.85MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.05% mem=157.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.87% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.61% mem=552.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.39% mem=498MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+# warm symfony c50
+11:54:42
+social-network-php-symfony-1 cpu=204.55% mem=25.56MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.27% mem=160.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.71% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.73% mem=552.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.05% mem=500.1MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:54:50
+social-network-php-symfony-1 cpu=201.94% mem=25.32MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.36% mem=163.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.54% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.71% mem=552.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.63% mem=501.2MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:54:57
+social-network-php-symfony-1 cpu=203.33% mem=25.31MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.02% mem=166.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.51% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.49% mem=552.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.54% mem=505.3MiB / 1GiB
+social-network-postgres-1 cpu=0.26% mem=419.3MiB / 1GiB
+11:55:05
+social-network-php-symfony-1 cpu=204.63% mem=25.56MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=16.68% mem=169.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.45% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.09% mem=552.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.35% mem=511.9MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:55:12
+social-network-php-symfony-1 cpu=199.40% mem=25.33MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.24% mem=171.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.49% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.53% mem=552.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.61% mem=514.9MiB / 1GiB
+social-network-postgres-1 cpu=1.60% mem=419.3MiB / 1GiB
+11:55:20
+# warm symfony c100
+social-network-php-symfony-1 cpu=202.57% mem=25.26MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.26% mem=173.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.45% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.16% mem=553.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.25% mem=519.9MiB / 1GiB
+social-network-postgres-1 cpu=1.66% mem=419.3MiB / 1GiB
+11:55:27
+social-network-php-symfony-1 cpu=205.64% mem=25.79MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.16% mem=175.5MiB / 512MiB
+social-network-haproxy-1 cpu=0.43% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.28% mem=552.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.25% mem=522.2MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:55:35
+social-network-php-symfony-1 cpu=204.31% mem=25.54MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.00% mem=176.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.40% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.66% mem=552.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.09% mem=525.5MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:55:42
+social-network-php-symfony-1 cpu=201.43% mem=25.28MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=16.76% mem=178.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.26% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.48% mem=552.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.90% mem=526.7MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:55:50
+social-network-php-symfony-1 cpu=204.61% mem=25.55MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=17.38% mem=179.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.35% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.32% mem=552.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.92% mem=529.4MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+11:55:57
+social-network-php-symfony-1 cpu=204.99% mem=25.56MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.71MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-redis-1 cpu=16.49% mem=180.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.24% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.26% mem=552.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.65% mem=530.8MiB / 1GiB
+social-network-postgres-1 cpu=0.00% mem=419.3MiB / 1GiB
+# post native c1
+11:56:05
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=15.67% mem=21.13MiB / 512MiB
+social-network-worker-native-1 cpu=8.77% mem=7.555MiB / 256MiB
+social-network-redis-1 cpu=7.56% mem=182.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.31% mem=556.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.44% mem=555.2MiB / 1GiB
+social-network-postgres-1 cpu=29.75% mem=427.5MiB / 1GiB
+11:56:12
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=15.39% mem=21.65MiB / 512MiB
+social-network-worker-native-1 cpu=8.23% mem=7.559MiB / 256MiB
+social-network-redis-1 cpu=7.09% mem=183.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.46% mem=558.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.37% mem=565.8MiB / 1GiB
+social-network-postgres-1 cpu=6.95% mem=428.4MiB / 1GiB
+11:56:20
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=16.44% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=8.78% mem=7.547MiB / 256MiB
+social-network-redis-1 cpu=7.80% mem=186.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.22% mem=559.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.52% mem=569MiB / 1GiB
+social-network-postgres-1 cpu=29.06% mem=429.7MiB / 1GiB
+11:56:27
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=18.11% mem=20.89MiB / 512MiB
+social-network-worker-native-1 cpu=9.43% mem=7.793MiB / 256MiB
+social-network-redis-1 cpu=8.52% mem=188.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.75% mem=560.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.87% mem=570.7MiB / 1GiB
+social-network-postgres-1 cpu=31.53% mem=430.5MiB / 1GiB
+11:56:35
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=18.92% mem=20.89MiB / 512MiB
+social-network-worker-native-1 cpu=9.94% mem=7.543MiB / 256MiB
+social-network-redis-1 cpu=9.02% mem=190.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.90% mem=561.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.10% mem=571.9MiB / 1GiB
+social-network-postgres-1 cpu=31.21% mem=430.8MiB / 1GiB
+11:56:43
+# post native c10
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.535MiB / 256MiB
+social-network-redis-1 cpu=5.22% mem=192.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.10% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.80% mem=561.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.73% mem=572.3MiB / 1GiB
+social-network-postgres-1 cpu=26.63% mem=430.3MiB / 1GiB
+11:56:50
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=36.56% mem=21.2MiB / 512MiB
+social-network-worker-native-1 cpu=16.85% mem=7.785MiB / 256MiB
+social-network-redis-1 cpu=14.03% mem=196.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.31% mem=562.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.19% mem=573.1MiB / 1GiB
+social-network-postgres-1 cpu=50.80% mem=432.5MiB / 1GiB
+11:56:58
+social-network-php-symfony-1 cpu=0.00% mem=25.19MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=36.49% mem=20.93MiB / 512MiB
+social-network-worker-native-1 cpu=16.16% mem=7.555MiB / 256MiB
+social-network-redis-1 cpu=14.86% mem=203.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.37% mem=563MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.19% mem=573.8MiB / 1GiB
+social-network-postgres-1 cpu=50.63% mem=431.5MiB / 1GiB
+11:57:05
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=36.34% mem=21.42MiB / 512MiB
+social-network-worker-native-1 cpu=16.49% mem=7.543MiB / 256MiB
+social-network-redis-1 cpu=13.89% mem=206.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.02% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.71% mem=564.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.43% mem=574.6MiB / 1GiB
+social-network-postgres-1 cpu=50.55% mem=432.4MiB / 1GiB
+11:57:13
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=35.53% mem=21.68MiB / 512MiB
+social-network-worker-native-1 cpu=16.62% mem=7.543MiB / 256MiB
+social-network-redis-1 cpu=13.83% mem=210.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.68% mem=565.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.80% mem=576.3MiB / 1GiB
+social-network-postgres-1 cpu=50.69% mem=433.5MiB / 1GiB
+11:57:20
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=35.10% mem=22.17MiB / 512MiB
+social-network-worker-native-1 cpu=16.12% mem=7.543MiB / 256MiB
+social-network-redis-1 cpu=13.44% mem=214.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.02% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.70% mem=566.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.38% mem=577.2MiB / 1GiB
+social-network-postgres-1 cpu=51.03% mem=432.2MiB / 1GiB
+# post native c50
+11:57:28
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=35.17% mem=21.17MiB / 512MiB
+social-network-worker-native-1 cpu=16.26% mem=7.551MiB / 256MiB
+social-network-redis-1 cpu=13.90% mem=218MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.55% mem=567MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.42% mem=577.8MiB / 1GiB
+social-network-postgres-1 cpu=50.52% mem=433.7MiB / 1GiB
+11:57:35
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=19.36% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=9.36% mem=7.543MiB / 256MiB
+social-network-redis-1 cpu=10.53% mem=221.8MiB / 512MiB
+social-network-haproxy-1 cpu=0.09% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=3.36% mem=568.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.00% mem=578.1MiB / 1GiB
+social-network-postgres-1 cpu=50.63% mem=432.5MiB / 1GiB
+11:57:43
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=35.69% mem=21.43MiB / 512MiB
+social-network-worker-native-1 cpu=16.29% mem=7.551MiB / 256MiB
+social-network-redis-1 cpu=13.76% mem=225.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.89% mem=568.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.80% mem=579.4MiB / 1GiB
+social-network-postgres-1 cpu=50.53% mem=434.3MiB / 1GiB
+11:57:50
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=36.09% mem=21.43MiB / 512MiB
+social-network-worker-native-1 cpu=16.58% mem=7.797MiB / 256MiB
+social-network-redis-1 cpu=15.60% mem=230MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.87% mem=569.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=7.80% mem=584.1MiB / 1GiB
+social-network-postgres-1 cpu=50.57% mem=432.9MiB / 1GiB
+11:57:58
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=30.06% mem=21.17MiB / 512MiB
+social-network-worker-native-1 cpu=13.88% mem=7.555MiB / 256MiB
+social-network-redis-1 cpu=11.89% mem=233.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.50% mem=570MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=4.65% mem=593.8MiB / 1GiB
+social-network-postgres-1 cpu=51.29% mem=468.1MiB / 1GiB
+11:58:05
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=36.13% mem=21.43MiB / 512MiB
+social-network-worker-native-1 cpu=16.11% mem=7.793MiB / 256MiB
+social-network-redis-1 cpu=15.24% mem=237.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.67% mem=571.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=7.43% mem=598MiB / 1GiB
+social-network-postgres-1 cpu=50.92% mem=429.6MiB / 1GiB
+# post native c100
+11:58:13
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=34.91% mem=21.18MiB / 512MiB
+social-network-worker-native-1 cpu=16.08% mem=7.555MiB / 256MiB
+social-network-redis-1 cpu=13.81% mem=240.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.04% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.38% mem=570.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.57% mem=585MiB / 1GiB
+social-network-postgres-1 cpu=50.55% mem=429.6MiB / 1GiB
+11:58:20
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=34.76% mem=21.41MiB / 512MiB
+social-network-worker-native-1 cpu=15.85% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.91% mem=244.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=7.15% mem=571.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=8.82% mem=588.3MiB / 1GiB
+social-network-postgres-1 cpu=50.91% mem=431.3MiB / 1GiB
+11:58:28
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=34.66% mem=22.2MiB / 512MiB
+social-network-worker-native-1 cpu=15.99% mem=7.805MiB / 256MiB
+social-network-redis-1 cpu=13.61% mem=248.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.89% mem=573.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.97% mem=598.8MiB / 1GiB
+social-network-postgres-1 cpu=51.10% mem=434.4MiB / 1GiB
+11:58:36
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=35.35% mem=21.18MiB / 512MiB
+social-network-worker-native-1 cpu=15.87% mem=7.547MiB / 256MiB
+social-network-redis-1 cpu=15.13% mem=252.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.69% mem=581MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=7.23% mem=614MiB / 1GiB
+social-network-postgres-1 cpu=50.89% mem=434.5MiB / 1GiB
+11:58:43
+social-network-php-symfony-1 cpu=0.00% mem=25.17MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.65MiB / 256MiB
+social-network-php-native-1 cpu=33.88% mem=21.17MiB / 512MiB
+social-network-worker-native-1 cpu=15.43% mem=7.578MiB / 256MiB
+social-network-redis-1 cpu=13.18% mem=256.5MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.56% mem=585.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.58% mem=622.2MiB / 1GiB
+social-network-postgres-1 cpu=50.97% mem=434.8MiB / 1GiB
+11:58:51
+# post symfony c1
+social-network-php-symfony-1 cpu=37.03% mem=25.87MiB / 512MiB
+social-network-worker-symfony-1 cpu=8.00% mem=12.18MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=8.66% mem=259.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.05% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.40% mem=587.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.74% mem=622.3MiB / 1GiB
+social-network-postgres-1 cpu=24.45% mem=443.1MiB / 1GiB
+11:58:58
+social-network-php-symfony-1 cpu=38.90% mem=26.12MiB / 512MiB
+social-network-worker-symfony-1 cpu=8.37% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=9.07% mem=269.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.47% mem=592.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=4.53% mem=630.6MiB / 1GiB
+social-network-postgres-1 cpu=26.12% mem=442.9MiB / 1GiB
+11:59:06
+social-network-php-symfony-1 cpu=39.14% mem=25.63MiB / 512MiB
+social-network-worker-symfony-1 cpu=8.34% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=9.21% mem=269.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.70% mem=600.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.98% mem=640.7MiB / 1GiB
+social-network-postgres-1 cpu=26.44% mem=442.6MiB / 1GiB
+11:59:13
+social-network-php-symfony-1 cpu=39.12% mem=25.87MiB / 512MiB
+social-network-worker-symfony-1 cpu=8.41% mem=12.38MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.88MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=7.95% mem=269.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.04% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.57% mem=608.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=4.82% mem=641.1MiB / 1GiB
+social-network-postgres-1 cpu=25.72% mem=443MiB / 1GiB
+11:59:21
+social-network-php-symfony-1 cpu=39.59% mem=25.62MiB / 512MiB
+social-network-worker-symfony-1 cpu=8.85% mem=12.16MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=9.61% mem=271.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.07% mem=612MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.63% mem=641.7MiB / 1GiB
+social-network-postgres-1 cpu=26.51% mem=442.8MiB / 1GiB
+11:59:28
+social-network-php-symfony-1 cpu=39.48% mem=25.38MiB / 512MiB
+social-network-worker-symfony-1 cpu=8.76% mem=12.39MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=8.19% mem=273.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=4.61% mem=617.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=4.85% mem=642MiB / 1GiB
+social-network-postgres-1 cpu=26.59% mem=442.3MiB / 1GiB
+# post symfony c10
+11:59:36
+social-network-php-symfony-1 cpu=86.43% mem=25.41MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.58% mem=12.14MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=15.92% mem=276.8MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.29% mem=625.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=8.07% mem=647.5MiB / 1GiB
+social-network-postgres-1 cpu=50.79% mem=442.6MiB / 1GiB
+11:59:43
+social-network-php-symfony-1 cpu=12.16% mem=26.16MiB / 512MiB
+social-network-worker-symfony-1 cpu=2.66% mem=12.14MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=6.89% mem=280.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.10% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=3.06% mem=626.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.79% mem=647.1MiB / 1GiB
+social-network-postgres-1 cpu=40.69% mem=442.1MiB / 1GiB
+11:59:52
+social-network-php-symfony-1 cpu=84.49% mem=25.66MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.84% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.44% mem=285.3MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.58% mem=632.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.48% mem=647.4MiB / 1GiB
+social-network-postgres-1 cpu=51.06% mem=442.9MiB / 1GiB
+11:59:59
+social-network-php-symfony-1 cpu=83.47% mem=25.4MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.66% mem=12.4MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.15% mem=289.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.71% mem=632.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.71% mem=647.5MiB / 1GiB
+social-network-postgres-1 cpu=50.56% mem=442.7MiB / 1GiB
+12:00:07
+social-network-php-symfony-1 cpu=85.90% mem=25.66MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.88% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.46% mem=294.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.16% mem=632.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.03% mem=647.5MiB / 1GiB
+social-network-postgres-1 cpu=50.65% mem=442.4MiB / 1GiB
+12:00:14
+# post symfony c50
+social-network-php-symfony-1 cpu=21.13% mem=25.91MiB / 512MiB
+social-network-worker-symfony-1 cpu=4.24% mem=12.41MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=8.89% mem=298.2MiB / 512MiB
+social-network-haproxy-1 cpu=0.09% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=3.21% mem=632.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.97% mem=648MiB / 1GiB
+social-network-postgres-1 cpu=36.80% mem=441.7MiB / 1GiB
+12:00:23
+social-network-php-symfony-1 cpu=86.29% mem=25.91MiB / 512MiB
+social-network-worker-symfony-1 cpu=17.33% mem=12.39MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=15.04% mem=302.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.04% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=7.76% mem=632.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.17% mem=647.7MiB / 1GiB
+social-network-postgres-1 cpu=50.88% mem=443.1MiB / 1GiB
+12:00:30
+social-network-php-symfony-1 cpu=86.18% mem=25.67MiB / 512MiB
+social-network-worker-symfony-1 cpu=17.04% mem=12.39MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.51% mem=306.8MiB / 512MiB
+social-network-haproxy-1 cpu=0.01% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.01% mem=633.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.00% mem=648.4MiB / 1GiB
+social-network-postgres-1 cpu=50.80% mem=442.1MiB / 1GiB
+12:00:38
+social-network-php-symfony-1 cpu=86.45% mem=25.91MiB / 512MiB
+social-network-worker-symfony-1 cpu=17.21% mem=12.16MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.52% mem=311.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=7.43% mem=634MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.78% mem=649MiB / 1GiB
+social-network-postgres-1 cpu=50.58% mem=442.5MiB / 1GiB
+12:00:46
+social-network-php-symfony-1 cpu=85.09% mem=25.4MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.96% mem=12.39MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.76% mem=315.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.01% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.89% mem=636.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.94% mem=651.5MiB / 1GiB
+social-network-postgres-1 cpu=50.41% mem=442.8MiB / 1GiB
+12:00:53
+social-network-php-symfony-1 cpu=86.56% mem=26.41MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.75% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.24% mem=319.9MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=7.50% mem=637.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.99% mem=653.1MiB / 1GiB
+social-network-postgres-1 cpu=50.75% mem=442.5MiB / 1GiB
+# post symfony c100
+12:01:01
+social-network-php-symfony-1 cpu=76.07% mem=25.91MiB / 512MiB
+social-network-worker-symfony-1 cpu=14.30% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=13.51% mem=323.5MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=10.27% mem=678.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=10.25% mem=690.8MiB / 1GiB
+social-network-postgres-1 cpu=50.84% mem=444.6MiB / 1GiB
+12:01:08
+social-network-php-symfony-1 cpu=51.03% mem=26.41MiB / 512MiB
+social-network-worker-symfony-1 cpu=10.65% mem=12.16MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=12.23% mem=326.6MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.43% mem=683.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=5.40% mem=696.7MiB / 1GiB
+social-network-postgres-1 cpu=20.09% mem=438.4MiB / 1GiB
+12:01:17
+social-network-php-symfony-1 cpu=86.35% mem=25.91MiB / 512MiB
+social-network-worker-symfony-1 cpu=17.32% mem=12.39MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=16.41% mem=331.7MiB / 512MiB
+social-network-haproxy-1 cpu=0.03% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=7.13% mem=694.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=8.74% mem=714MiB / 1GiB
+social-network-postgres-1 cpu=51.58% mem=439.3MiB / 1GiB
+12:01:24
+social-network-php-symfony-1 cpu=85.88% mem=25.45MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.74% mem=12.16MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=14.87% mem=336MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.50% mem=716.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.43% mem=729.5MiB / 1GiB
+social-network-postgres-1 cpu=51.13% mem=440.3MiB / 1GiB
+12:01:32
+social-network-php-symfony-1 cpu=85.82% mem=25.42MiB / 512MiB
+social-network-worker-symfony-1 cpu=16.93% mem=12.15MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.00% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=16.20% mem=340.1MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.99% mem=717.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=7.66% mem=731MiB / 1GiB
+social-network-postgres-1 cpu=50.42% mem=440.5MiB / 1GiB
+12:01:39
+social-network-php-symfony-1 cpu=0.00% mem=25.36MiB / 512MiB
+social-network-worker-symfony-1 cpu=6.87% mem=12.14MiB / 256MiB
+social-network-php-native-1 cpu=0.00% mem=20.87MiB / 512MiB
+social-network-worker-native-1 cpu=0.01% mem=7.539MiB / 256MiB
+social-network-redis-1 cpu=5.23% mem=343.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.04% mem=31.22MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.32% mem=712.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.08% mem=726.5MiB / 1GiB
+social-network-postgres-1 cpu=33.29% mem=466.4MiB / 1GiB
+# nocache native c1
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=32.77% mem=20.34MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.02% mem=301.8MiB / 1GiB
+social-network-redis-1 cpu=1.47% mem=11.41MiB / 512MiB
+social-network-haproxy-1 cpu=5.09% mem=30.25MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=17.39% mem=305.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=17.55% mem=317.2MiB / 1GiB
+11:21:04
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=44.85% mem=21.28MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=301.8MiB / 1GiB
+social-network-redis-1 cpu=2.97% mem=11.43MiB / 512MiB
+social-network-haproxy-1 cpu=6.88% mem=30.25MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=18.93% mem=308.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=19.72% mem=315.9MiB / 1GiB
+11:21:11
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=46.72% mem=20.79MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=301.8MiB / 1GiB
+social-network-redis-1 cpu=1.76% mem=11.41MiB / 512MiB
+social-network-haproxy-1 cpu=7.41% mem=30.53MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=19.52% mem=309.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=19.38% mem=315.3MiB / 1GiB
+11:21:19
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=46.98% mem=20.68MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=3.02% mem=11.41MiB / 512MiB
+social-network-haproxy-1 cpu=7.35% mem=30.54MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=19.39% mem=309.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=19.29% mem=315MiB / 1GiB
+11:21:26
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=48.30% mem=21.23MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=1.77% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=7.37% mem=30.29MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=19.15% mem=309.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=19.56% mem=314.8MiB / 1GiB
+11:21:34
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=47.74% mem=20.64MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=3.25% mem=11.83MiB / 512MiB
+social-network-haproxy-1 cpu=6.95% mem=30.54MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=19.00% mem=310MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=19.47% mem=314.9MiB / 1GiB
+# nocache native c10
+11:21:41
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=124.91% mem=21.6MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.28% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.61% mem=31.07MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.45% mem=310.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.99% mem=315.1MiB / 1GiB
+11:21:49
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=82.69% mem=21.63MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.24% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=13.72% mem=30.86MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=32.78% mem=310.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=19.94% mem=313.9MiB / 1GiB
+11:21:56
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=124.55% mem=21.48MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.36% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.96% mem=30.37MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.41% mem=310.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.40% mem=314.1MiB / 1GiB
+11:22:04
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=124.78% mem=21.81MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=5.67% mem=11.39MiB / 512MiB
+social-network-haproxy-1 cpu=20.18% mem=30.61MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.88% mem=309.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.85% mem=314.1MiB / 1GiB
+11:22:11
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=125.61% mem=21.99MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.36% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=20.29% mem=30.87MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.39% mem=309.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=49.60% mem=314.2MiB / 1GiB
+11:22:19
+# nocache native c50
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=32.71% mem=20.09MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.35% mem=302MiB / 1GiB
+social-network-redis-1 cpu=2.39% mem=11.31MiB / 512MiB
+social-network-haproxy-1 cpu=5.45% mem=30.41MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.16% mem=308.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.73% mem=313MiB / 1GiB
+11:22:27
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=123.36% mem=21.23MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.51% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=20.12% mem=30.44MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.74% mem=309.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.49% mem=313MiB / 1GiB
+11:22:35
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=122.01% mem=21.84MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.40% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.39% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.41% mem=30.49MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.49% mem=309.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.82% mem=312.8MiB / 1GiB
+11:22:42
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=127.31% mem=22.27MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.57% mem=11.32MiB / 512MiB
+social-network-haproxy-1 cpu=20.16% mem=30.98MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.23% mem=309.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.87% mem=312.6MiB / 1GiB
+11:22:50
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=124.41% mem=22.32MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.31% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.44% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.52% mem=30.49MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.25% mem=309.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.30% mem=312.3MiB / 1GiB
+11:22:57
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=126.56% mem=21.11MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.38% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.86% mem=30.5MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.69% mem=309.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.87% mem=311.6MiB / 1GiB
+# nocache native c100
+11:23:05
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=121.87% mem=21.84MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.39% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.37% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.26% mem=30.78MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.68% mem=308.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.22% mem=311.9MiB / 1GiB
+11:23:13
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=41.60% mem=20.99MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.45% mem=302MiB / 1GiB
+social-network-redis-1 cpu=1.75% mem=11.32MiB / 512MiB
+social-network-haproxy-1 cpu=13.97% mem=30.57MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=18.24% mem=308.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=18.81% mem=311.8MiB / 1GiB
+11:23:21
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=124.54% mem=22.41MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.59% mem=11.32MiB / 512MiB
+social-network-haproxy-1 cpu=19.55% mem=30.58MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.76% mem=309.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.18% mem=311.3MiB / 1GiB
+11:23:29
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=124.60% mem=20.88MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.50% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=20.15% mem=31.32MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.36% mem=309.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.85% mem=311.5MiB / 1GiB
+11:23:36
+social-network-php-symfony-1 cpu=0.00% mem=17.48MiB / 512MiB
+social-network-php-native-1 cpu=123.35% mem=21.93MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.24% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.41% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=19.50% mem=31.07MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.07% mem=309.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.33% mem=311MiB / 1GiB
+11:23:44
+# nocache symfony c1
+social-network-php-symfony-1 cpu=20.33% mem=25.21MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=0.77% mem=11.37MiB / 512MiB
+social-network-haproxy-1 cpu=1.96% mem=30.75MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=7.34% mem=313.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=34.43% mem=310.4MiB / 1GiB
+11:23:52
+social-network-php-symfony-1 cpu=59.57% mem=25.87MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.051MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=1.38% mem=11.38MiB / 512MiB
+social-network-haproxy-1 cpu=5.76% mem=30.77MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.26% mem=314MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=15.50% mem=315.2MiB / 1GiB
+11:24:00
+social-network-php-symfony-1 cpu=59.99% mem=24.95MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=2.72% mem=11.59MiB / 512MiB
+social-network-haproxy-1 cpu=5.74% mem=30.81MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.46% mem=313.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=15.31% mem=315.3MiB / 1GiB
+11:24:07
+social-network-php-symfony-1 cpu=59.00% mem=25.35MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=1.50% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=6.01% mem=30.81MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.38% mem=314.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=15.73% mem=315.2MiB / 1GiB
+11:24:15
+social-network-php-symfony-1 cpu=59.59% mem=25.5MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=2.51% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=5.54% mem=30.81MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.94% mem=313.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=15.05% mem=315.3MiB / 1GiB
+11:24:22
+social-network-php-symfony-1 cpu=59.48% mem=26.01MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=1.40% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=5.89% mem=31.05MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=15.43% mem=313.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=17.43% mem=315.3MiB / 1GiB
+# nocache symfony c10
+11:24:30
+social-network-php-symfony-1 cpu=196.22% mem=26.19MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=5.63% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=21.18% mem=31.1MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.76% mem=314.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.47% mem=315MiB / 1GiB
+11:24:37
+social-network-php-symfony-1 cpu=196.20% mem=25.57MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.62% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=21.26% mem=31.45MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.95% mem=314.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=3.93% mem=314.6MiB / 1GiB
+11:24:45
+social-network-php-symfony-1 cpu=195.21% mem=27.13MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=5.37% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=20.65% mem=31.43MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.42% mem=314.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.87% mem=314.9MiB / 1GiB
+11:24:52
+social-network-php-symfony-1 cpu=194.60% mem=26.02MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.43% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=20.68% mem=31.18MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.06% mem=313.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.85% mem=315.2MiB / 1GiB
+11:25:00
+social-network-php-symfony-1 cpu=194.83% mem=26.54MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=5.55% mem=11.39MiB / 512MiB
+social-network-haproxy-1 cpu=20.53% mem=30.94MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.99% mem=313.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.16% mem=314.9MiB / 1GiB
+11:25:07
+# nocache symfony c50
+social-network-php-symfony-1 cpu=30.43% mem=25.75MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.46% mem=302MiB / 1GiB
+social-network-redis-1 cpu=0.92% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=3.49% mem=31.19MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=9.59% mem=313.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=9.52% mem=314.4MiB / 1GiB
+11:25:16
+social-network-php-symfony-1 cpu=198.32% mem=26MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.80% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.41% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=21.80% mem=30.95MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.37% mem=313.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.38% mem=314.3MiB / 1GiB
+11:25:23
+social-network-php-symfony-1 cpu=192.47% mem=25.85MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.39% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=20.77% mem=31.43MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.85% mem=313.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.02% mem=314.1MiB / 1GiB
+11:25:31
+social-network-php-symfony-1 cpu=192.68% mem=26.2MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.40% mem=302.1MiB / 1GiB
+social-network-redis-1 cpu=4.37% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=20.55% mem=30.96MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.79% mem=313.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.71% mem=314.1MiB / 1GiB
+11:25:39
+social-network-php-symfony-1 cpu=195.12% mem=26.85MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.11% mem=302MiB / 1GiB
+social-network-redis-1 cpu=4.45% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=21.37% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.37% mem=313.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.53% mem=313.8MiB / 1GiB
+11:25:46
+social-network-php-symfony-1 cpu=196.56% mem=26.77MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.41% mem=302.1MiB / 1GiB
+social-network-redis-1 cpu=4.35% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=20.95% mem=31.2MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.19% mem=313.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.95% mem=313.7MiB / 1GiB
+# nocache symfony c100
+11:25:54
+social-network-php-symfony-1 cpu=194.60% mem=26.91MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=302.1MiB / 1GiB
+social-network-redis-1 cpu=4.42% mem=11.34MiB / 512MiB
+social-network-haproxy-1 cpu=20.81% mem=31.21MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=51.10% mem=313.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.27% mem=313.5MiB / 1GiB
+11:26:01
+social-network-php-symfony-1 cpu=129.07% mem=25.73MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.48% mem=302.2MiB / 1GiB
+social-network-redis-1 cpu=3.06% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=13.93% mem=30.99MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.05% mem=312.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=22.92% mem=313.2MiB / 1GiB
+11:26:09
+social-network-php-symfony-1 cpu=193.78% mem=26.33MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=302.1MiB / 1GiB
+social-network-redis-1 cpu=4.48% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=20.83% mem=30.98MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.93% mem=313.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.87% mem=314MiB / 1GiB
+11:26:16
+social-network-php-symfony-1 cpu=194.29% mem=26.4MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.78% mem=302.6MiB / 1GiB
+social-network-redis-1 cpu=4.31% mem=11.32MiB / 512MiB
+social-network-haproxy-1 cpu=20.67% mem=30.98MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.81% mem=313.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=51.04% mem=313.3MiB / 1GiB
+11:26:24
+social-network-php-symfony-1 cpu=194.17% mem=26.22MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=302.2MiB / 1GiB
+social-network-redis-1 cpu=4.45% mem=11.33MiB / 512MiB
+social-network-haproxy-1 cpu=21.16% mem=31.23MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=50.99% mem=313MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=50.91% mem=313.3MiB / 1GiB
+11:26:31
+social-network-php-symfony-1 cpu=59.27% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=1.39% mem=302.2MiB / 1GiB
+social-network-redis-1 cpu=3.47% mem=11.45MiB / 512MiB
+social-network-haproxy-1 cpu=6.29% mem=30.98MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=17.09% mem=312.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=17.76% mem=312.8MiB / 1GiB
+11:26:39
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.047MiB / 256MiB
+social-network-postgres-1 cpu=0.05% mem=302.4MiB / 1GiB
+social-network-redis-1 cpu=0.32% mem=11.32MiB / 512MiB
+social-network-haproxy-1 cpu=0.02% mem=30.98MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.05% mem=312.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.55% mem=312.9MiB / 1GiB
+11:26:46
+# cold native c1
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.06MiB / 512MiB
+social-network-postgres-1 cpu=0.42% mem=301.8MiB / 1GiB
+social-network-redis-1 cpu=1.48% mem=11.27MiB / 512MiB
+social-network-haproxy-1 cpu=0.00% mem=30.98MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=0.02% mem=312.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=0.26% mem=313.1MiB / 1GiB
+11:26:54
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=58.64% mem=21.35MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.78MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=304.8MiB / 1GiB
+social-network-redis-1 cpu=12.07% mem=125.8MiB / 512MiB
+social-network-haproxy-1 cpu=0.96% mem=30.99MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.82% mem=311.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=4.60% mem=312.5MiB / 1GiB
+11:27:01
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=35.49% mem=21.77MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.78MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=304.8MiB / 1GiB
+social-network-redis-1 cpu=28.76% mem=209.8MiB / 512MiB
+social-network-haproxy-1 cpu=4.20% mem=31MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=12.23% mem=311.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=12.25% mem=311.9MiB / 1GiB
+11:27:09
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=36.66% mem=21.33MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.78MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=304.9MiB / 1GiB
+social-network-redis-1 cpu=27.86% mem=375MiB / 512MiB
+social-network-haproxy-1 cpu=4.33% mem=31.25MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=12.58% mem=310.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=12.33% mem=311.5MiB / 1GiB
+11:27:16
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=36.53% mem=21.11MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.78MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=304.9MiB / 1GiB
+social-network-redis-1 cpu=29.06% mem=401.6MiB / 512MiB
+social-network-haproxy-1 cpu=4.18% mem=31MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=11.93% mem=310MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=12.14% mem=310.8MiB / 1GiB
+11:27:24
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=36.46% mem=21.07MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.78MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=304.9MiB / 1GiB
+social-network-redis-1 cpu=29.09% mem=402.4MiB / 512MiB
+social-network-haproxy-1 cpu=4.38% mem=31.01MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=11.85% mem=309.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=12.04% mem=310.2MiB / 1GiB
+# cold native c10
+11:27:32
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=118.26% mem=21.41MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=304.9MiB / 1GiB
+social-network-redis-1 cpu=70.34% mem=122.7MiB / 512MiB
+social-network-haproxy-1 cpu=14.69% mem=31.02MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=36.80% mem=308.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=36.12% mem=309.5MiB / 1GiB
+11:27:39
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=208.07% mem=21.33MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=304.9MiB / 1GiB
+social-network-redis-1 cpu=37.20% mem=148.8MiB / 512MiB
+social-network-haproxy-1 cpu=3.03% mem=31.02MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=5.13% mem=307.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.62% mem=308.8MiB / 1GiB
+11:27:47
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=104.70% mem=22.43MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.05% mem=305MiB / 1GiB
+social-network-redis-1 cpu=73.97% mem=414.2MiB / 512MiB
+social-network-haproxy-1 cpu=13.74% mem=31.5MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.28% mem=306.9MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=33.84% mem=308MiB / 1GiB
+11:27:54
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=105.54% mem=22.45MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305MiB / 1GiB
+social-network-redis-1 cpu=73.83% mem=418MiB / 512MiB
+social-network-haproxy-1 cpu=13.96% mem=31.03MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.98% mem=306.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=35.36% mem=307.8MiB / 1GiB
+11:28:02
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=103.57% mem=22.06MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305MiB / 1GiB
+social-network-redis-1 cpu=74.09% mem=416.2MiB / 512MiB
+social-network-haproxy-1 cpu=13.54% mem=31.28MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.27% mem=306.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=34.45% mem=307.5MiB / 1GiB
+11:28:09
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=103.59% mem=22.79MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.1MiB / 1GiB
+social-network-redis-1 cpu=73.84% mem=414MiB / 512MiB
+social-network-haproxy-1 cpu=14.37% mem=31.51MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.21% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=35.61% mem=307.6MiB / 1GiB
+# cold native c50
+11:28:17
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=208.86% mem=21.36MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.05% mem=305.1MiB / 1GiB
+social-network-redis-1 cpu=39.29% mem=132.3MiB / 512MiB
+social-network-haproxy-1 cpu=4.00% mem=31.03MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.49% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.14% mem=307.3MiB / 1GiB
+11:28:24
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=68.00% mem=21.04MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.1MiB / 1GiB
+social-network-redis-1 cpu=43.35% mem=181.6MiB / 512MiB
+social-network-haproxy-1 cpu=9.69% mem=31.04MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=22.62% mem=306.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=3.58% mem=307.2MiB / 1GiB
+11:28:32
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=106.85% mem=21.6MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.2MiB / 1GiB
+social-network-redis-1 cpu=74.78% mem=415.8MiB / 512MiB
+social-network-haproxy-1 cpu=14.47% mem=31.29MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=35.07% mem=306.7MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=35.08% mem=307.7MiB / 1GiB
+11:28:39
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=104.74% mem=22.1MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.2MiB / 1GiB
+social-network-redis-1 cpu=73.89% mem=417.9MiB / 512MiB
+social-network-haproxy-1 cpu=13.91% mem=31.04MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.31% mem=306.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=35.86% mem=307.5MiB / 1GiB
+11:28:47
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=104.66% mem=21.28MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.01% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305.2MiB / 1GiB
+social-network-redis-1 cpu=75.00% mem=415.6MiB / 512MiB
+social-network-haproxy-1 cpu=13.63% mem=31.04MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.09% mem=306.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=34.07% mem=307.8MiB / 1GiB
+11:28:54
+# cold native c100
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=33.38% mem=20.62MiB / 512MiB
+social-network-postgres-1 cpu=1.48% mem=305.2MiB / 1GiB
+social-network-redis-1 cpu=25.31% mem=414.6MiB / 512MiB
+social-network-haproxy-1 cpu=4.49% mem=31.04MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=12.48% mem=306.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=36.03% mem=307.8MiB / 1GiB
+11:29:02
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=207.37% mem=21.16MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.8MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.05% mem=305.3MiB / 1GiB
+social-network-redis-1 cpu=40.25% mem=140.6MiB / 512MiB
+social-network-haproxy-1 cpu=3.55% mem=31.05MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.37% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=6.34% mem=307.3MiB / 1GiB
+11:29:09
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=109.50% mem=21.6MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.8MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305.3MiB / 1GiB
+social-network-redis-1 cpu=73.06% mem=304.5MiB / 512MiB
+social-network-haproxy-1 cpu=14.68% mem=31.56MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=36.27% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=38.53% mem=307.4MiB / 1GiB
+11:29:17
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=106.39% mem=22.16MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.8MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.3MiB / 1GiB
+social-network-redis-1 cpu=75.46% mem=417.3MiB / 512MiB
+social-network-haproxy-1 cpu=14.00% mem=31.33MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.39% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=35.53% mem=307.7MiB / 1GiB
+11:29:24
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=104.67% mem=21.57MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.8MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=73.89% mem=416.8MiB / 512MiB
+social-network-haproxy-1 cpu=13.86% mem=31.06MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.02% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=36.19% mem=307.7MiB / 1GiB
+11:29:32
+social-network-php-symfony-1 cpu=0.00% mem=24.66MiB / 512MiB
+social-network-php-native-1 cpu=103.50% mem=22.01MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.8MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=76.17% mem=417.6MiB / 512MiB
+social-network-haproxy-1 cpu=13.59% mem=31.77MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.12% mem=306.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=32.97% mem=307.5MiB / 1GiB
+11:29:39
+# cold symfony c1
+social-network-php-symfony-1 cpu=45.63% mem=25.87MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-postgres-1 cpu=0.03% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=23.67% mem=35.53MiB / 512MiB
+social-network-haproxy-1 cpu=4.00% mem=31.31MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=11.32% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=4.09% mem=307.5MiB / 1GiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.035MiB / 256MiB
+11:29:47
+social-network-php-symfony-1 cpu=77.73% mem=25.23MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.031MiB / 256MiB
+social-network-postgres-1 cpu=0.04% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=8.64% mem=125.4MiB / 512MiB
+social-network-haproxy-1 cpu=0.59% mem=31.07MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.07% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=1.78% mem=307.5MiB / 1GiB
+11:29:55
+social-network-php-symfony-1 cpu=46.50% mem=25.62MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.031MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=24.26% mem=223MiB / 512MiB
+social-network-haproxy-1 cpu=3.73% mem=31.09MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=10.58% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=12.13% mem=307.4MiB / 1GiB
+11:30:02
+social-network-php-symfony-1 cpu=47.46% mem=25.57MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.031MiB / 256MiB
+social-network-postgres-1 cpu=0.03% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=25.51% mem=366.8MiB / 512MiB
+social-network-haproxy-1 cpu=3.73% mem=31.09MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=10.55% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=10.90% mem=307.5MiB / 1GiB
+11:30:10
+social-network-php-symfony-1 cpu=46.27% mem=26.23MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.031MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=24.90% mem=399MiB / 512MiB
+social-network-haproxy-1 cpu=3.76% mem=31.33MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=10.53% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=11.98% mem=307.6MiB / 1GiB
+11:30:17
+social-network-php-symfony-1 cpu=46.68% mem=25.38MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.031MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=25.72% mem=399.9MiB / 512MiB
+social-network-haproxy-1 cpu=3.75% mem=31.09MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=10.99% mem=306.5MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=10.34% mem=307.7MiB / 1GiB
+# cold symfony c10
+11:30:25
+social-network-php-symfony-1 cpu=203.06% mem=25.64MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=17.50% mem=125.4MiB / 512MiB
+social-network-haproxy-1 cpu=2.35% mem=31.09MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=3.73% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=28.02% mem=307.3MiB / 1GiB
+11:30:32
+social-network-php-symfony-1 cpu=19.13% mem=25.12MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.61MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=1.45% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=5.98% mem=136MiB / 512MiB
+social-network-haproxy-1 cpu=0.22% mem=31.1MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=1.65% mem=306.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.83% mem=307.3MiB / 1GiB
+11:30:41
+social-network-php-symfony-1 cpu=141.03% mem=27.02MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=67.91% mem=406.7MiB / 512MiB
+social-network-haproxy-1 cpu=12.72% mem=31.12MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=32.12% mem=306.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=31.75% mem=307.6MiB / 1GiB
+11:30:48
+social-network-php-symfony-1 cpu=138.91% mem=26.62MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=1.38% mem=305.8MiB / 1GiB
+social-network-redis-1 cpu=68.92% mem=409MiB / 512MiB
+social-network-haproxy-1 cpu=12.41% mem=31.11MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=31.40% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=32.34% mem=307.6MiB / 1GiB
+11:30:56
+social-network-php-symfony-1 cpu=137.69% mem=26.48MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.01% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.28% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=67.79% mem=407.7MiB / 512MiB
+social-network-haproxy-1 cpu=12.53% mem=31.36MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=31.60% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=30.93% mem=307.4MiB / 1GiB
+11:31:03
+# cold symfony c50
+social-network-php-symfony-1 cpu=22.78% mem=25.12MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-postgres-1 cpu=2.92% mem=302.9MiB / 1GiB
+social-network-redis-1 cpu=16.34% mem=407.4MiB / 512MiB
+social-network-haproxy-1 cpu=2.22% mem=31.1MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=6.80% mem=306.1MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=30.81% mem=307.4MiB / 1GiB
+11:31:11
+social-network-php-symfony-1 cpu=202.69% mem=25.33MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=17.54% mem=131MiB / 512MiB
+social-network-haproxy-1 cpu=1.59% mem=31.11MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=2.32% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=2.41% mem=307.3MiB / 1GiB
+11:31:18
+social-network-php-symfony-1 cpu=145.25% mem=26.63MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=1.34% mem=305.5MiB / 1GiB
+social-network-redis-1 cpu=66.60% mem=281.7MiB / 512MiB
+social-network-haproxy-1 cpu=13.55% mem=31.12MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=32.16% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=32.86% mem=307.3MiB / 1GiB
+11:31:26
+social-network-php-symfony-1 cpu=139.41% mem=26.32MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=66.65% mem=406.5MiB / 512MiB
+social-network-haproxy-1 cpu=12.79% mem=31.84MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=31.87% mem=306.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=31.72% mem=307.7MiB / 1GiB
+11:31:33
+social-network-php-symfony-1 cpu=140.10% mem=26.33MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.38% mem=307.2MiB / 1GiB
+social-network-redis-1 cpu=68.02% mem=409.5MiB / 512MiB
+social-network-haproxy-1 cpu=12.86% mem=31.13MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=32.86% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=30.87% mem=307.5MiB / 1GiB
+11:31:41
+social-network-php-symfony-1 cpu=139.29% mem=26.42MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=68.19% mem=408.5MiB / 512MiB
+social-network-haproxy-1 cpu=12.66% mem=31.61MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=31.51% mem=306.4MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=31.35% mem=307.3MiB / 1GiB
+11:31:48
+# cold symfony c100
+social-network-php-symfony-1 cpu=144.63% mem=26.72MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=0B / 0B
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=65.07% mem=81.57MiB / 512MiB
+social-network-haproxy-1 cpu=14.15% mem=31.13MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=34.33% mem=306.6MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=11.43% mem=307.6MiB / 1GiB
+social-network-worker-native-1 cpu=0.00% mem=7.043MiB / 256MiB
+11:31:56
+social-network-php-symfony-1 cpu=204.28% mem=25.83MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.24% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=17.29% mem=134.7MiB / 512MiB
+social-network-haproxy-1 cpu=1.54% mem=31.13MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=3.03% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=3.92% mem=307.3MiB / 1GiB
+11:32:03
+social-network-php-symfony-1 cpu=145.39% mem=26.43MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=67.23% mem=392.7MiB / 512MiB
+social-network-haproxy-1 cpu=12.94% mem=31.42MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=32.77% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=32.33% mem=307.8MiB / 1GiB
+11:32:11
+social-network-php-symfony-1 cpu=140.72% mem=26.59MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=67.78% mem=407.4MiB / 512MiB
+social-network-haproxy-1 cpu=12.99% mem=31.14MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=31.01% mem=306.8MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=32.76% mem=307.4MiB / 1GiB
+11:32:19
+social-network-php-symfony-1 cpu=138.64% mem=26.3MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=67.40% mem=407.8MiB / 512MiB
+social-network-haproxy-1 cpu=12.66% mem=31.14MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=31.24% mem=306.2MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=30.71% mem=307.5MiB / 1GiB
+11:32:26
+social-network-php-symfony-1 cpu=135.88% mem=26.54MiB / 512MiB
+social-network-php-native-1 cpu=0.00% mem=20.59MiB / 512MiB
+social-network-worker-symfony-1 cpu=0.00% mem=11.79MiB / 256MiB
+social-network-worker-native-1 cpu=0.00% mem=7.039MiB / 256MiB
+social-network-postgres-1 cpu=0.00% mem=305.4MiB / 1GiB
+social-network-redis-1 cpu=69.19% mem=406.9MiB / 512MiB
+social-network-haproxy-1 cpu=12.48% mem=31.14MiB / 128MiB
+social-network-postgres-replica-1-1 cpu=30.56% mem=306.3MiB / 1GiB
+social-network-postgres-replica-2-1 cpu=32.48% mem=307.9MiB / 1GiB

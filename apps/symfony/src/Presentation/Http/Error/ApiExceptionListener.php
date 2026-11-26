@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace SocialNetwork\SymfonyApp\Presentation\Http\Error;
 
+use SocialNetwork\Core\Application\Authenticate\Unauthenticated;
 use SocialNetwork\Core\Application\Login\InvalidCredentials;
+use SocialNetwork\Core\Domain\Feed\InvalidFeedPage;
+use SocialNetwork\Core\Domain\Friend\InvalidFriendship;
+use SocialNetwork\Core\Domain\Post\InvalidPostData;
+use SocialNetwork\Core\Domain\Post\PostNotFound;
 use SocialNetwork\Core\Domain\User\InvalidUserData;
 use SocialNetwork\Core\Domain\User\UserNotFound;
 use SocialNetwork\SymfonyApp\Presentation\Http\Request\MalformedRequest;
@@ -23,6 +28,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
 #[AsEventListener(event: KernelEvents::EXCEPTION)]
 final class ApiExceptionListener
 {
+    /**
+     * Поля домена, которые в запросе называются иначе: идентификатор друга приходит параметром пути userId.
+     */
+    private const array FIELD_ALIASES = ['friendId' => 'userId'];
+
     public function __invoke(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
@@ -30,14 +40,22 @@ final class ApiExceptionListener
 
         $event->setResponse(match (true) {
             $exception instanceof InvalidUserData,
+            $exception instanceof InvalidFriendship => new ApiJsonResponse(400, [
+                'message' => $exception->getMessage(),
+                'field' => self::FIELD_ALIASES[$exception->field] ?? $exception->field,
+            ]),
+            $exception instanceof InvalidPostData,
+            $exception instanceof InvalidFeedPage,
             $exception instanceof MalformedRequest => new ApiJsonResponse(400, [
                 'message' => $exception->getMessage(),
                 'field' => $exception->field,
             ]),
-            $exception instanceof InvalidCredentials => new ApiJsonResponse(401, [
+            $exception instanceof InvalidCredentials,
+            $exception instanceof Unauthenticated => new ApiJsonResponse(401, [
                 'message' => $exception->getMessage(),
             ]),
-            $exception instanceof UserNotFound => new ApiJsonResponse(404, [
+            $exception instanceof UserNotFound,
+            $exception instanceof PostNotFound => new ApiJsonResponse(404, [
                 'message' => $exception->getMessage(),
             ]),
             $exception instanceof NotFoundHttpException => new ApiJsonResponse(404, [

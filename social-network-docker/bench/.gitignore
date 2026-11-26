@@ -1,2 +1,5 @@
 # Список id для нагрузки GET /user/get/{id}: свой для каждого сидирования (make bench-get-ids).
 get-ids.csv
+
+# Читатели ленты с токенами для нагрузки GET /post/feed и POST /post/create: свои для каждого сидирования (make bench-feed-readers).
+feed-readers.csv

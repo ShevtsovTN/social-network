@@ -10,13 +10,20 @@ final readonly class UserId
     {
     }
 
-    public static function fromString(string $value): self
+    /**
+     * @param string $field поле для ошибки: «id» по умолчанию, другие use case'ы передают своё
+     *                      (например, «friendId» для идентификатора друга)
+     */
+    public static function fromString(string $value, string $field = 'id'): self
     {
         $normalized = strtolower($value);
 
         // Флаг D: без него «$» пропускает завершающий перевод строки.
         if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/D', $normalized) !== 1) {
-            throw InvalidUserData::forField('id', 'User id must be a valid UUID.');
+            throw InvalidUserData::forField(
+                $field,
+                $field === 'id' ? 'User id must be a valid UUID.' : sprintf('%s must be a valid UUID.', $field),
+            );
         }
 
         return new self($normalized);

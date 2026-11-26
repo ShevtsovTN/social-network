@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7f2d9b2a-6a8b-4c93-8b1a-4b7b9e2e2a31",
     "name": "Social Network API",
-    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты, поиск анкет. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user → Search users. Login, Get user и Search users используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции).\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
+    "description": "Контракт из docs/openapi.json: регистрация, логин, просмотр анкеты, поиск анкет, друзья, посты и лента постов друзей. Коллекция прогоняется против native и symfony без изменений — меняется только окружение (baseUrl).\n\nЗапускать целиком через Collection Runner сверху вниз: Register → Login → Get user → Search users → Second user → Posts → Friends → Feed. Login, Get user и Search users используют пользователя, созданного запросом \"Register - success\" (id/пароль сохраняются в переменные коллекции). Папки Posts, Friends и Feed используют второго пользователя (Second user) как друга: его пост создаётся до дружбы и должен попасть в ленту первого пользователя после /friend/set.\n\nЛента итогово согласована (асинхронный fan-out через Redis Streams), поэтому запросы ленты в pre-request скрипте опрашивают её до 10 секунд, пока ожидаемое состояние не наступит.\n\nПеред запуском: `docker compose up -d` и выбрать окружение native (http://localhost:8081) или symfony (http://localhost:8082).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -15,7 +15,15 @@
     { "key": "gender", "value": "", "type": "string" },
     { "key": "city", "value": "", "type": "string" },
     { "key": "interests", "value": "", "type": "string" },
-    { "key": "token", "value": "", "type": "string" }
+    { "key": "token", "value": "", "type": "string" },
+    {"key": "secondUserId", "value": "", "type": "string"},
+    {"key": "secondToken", "value": "", "type": "string"},
+    {"key": "postId", "value": "", "type": "string"},
+    {"key": "postText", "value": "", "type": "string"},
+    {"key": "ownPostId", "value": "", "type": "string"},
+    {"key": "newestPostId", "value": "", "type": "string"},
+    {"key": "longText", "value": "", "type": "string"},
+    {"key": "invalidToken", "value": "invalid.token", "type": "string"}
   ],
   "item": [
     {
@@ -976,6 +984,2374 @@
                   "key": "last_name",
                   "value": "Pet"
                 }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Second user",
+      "item": [
+        {
+          "name": "Second user - register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('returns generated uuid', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+                  "    pm.collectionVariables.set('secondUserId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Anna\",\n  \"lastName\": \"Sidorova\",\n  \"birthDate\": \"1992-03-04\",\n  \"gender\": \"female\",\n  \"interests\": [\n    \"books\",\n    \"running\"\n  ],\n  \"city\": \"Kazan\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Second user - login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('returns a non-empty token', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.collectionVariables.set('secondToken', body.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{secondUserId}}\",\n  \"password\": \"s3cret-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Post create - success (second user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('returns generated uuid', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+                  "    pm.collectionVariables.set('postId', body.id);",
+                  "    pm.collectionVariables.set('postText', 'Second user post, edited');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Second user post\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - empty text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - blank text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - text too long",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('longText', 'a'.repeat(2001));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{longText}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - missing text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"No token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{invalidToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Invalid token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post get - success (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('is a post of the second user', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+                  "    pm.expect(body.text).to.be.a('string');",
+                  "    pm.expect(body.authorUserId).to.eql(pm.collectionVariables.get('secondUserId'));",
+                  "});",
+                  "",
+                  "pm.test('text is the created one', function () {",
+                  "    pm.expect(pm.response.json().text).to.eql('Second user post');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/get/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "get",
+                "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post get - invalid id format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/get/not-a-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "get",
+                "not-a-uuid"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post get - not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/get/99999999-9999-4999-8999-999999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "get",
+                "99999999-9999-4999-8999-999999999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post update - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{postId}}\",\n  \"text\": \"{{postText}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post get - after update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('is a post of the second user', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+                  "    pm.expect(body.text).to.be.a('string');",
+                  "    pm.expect(body.authorUserId).to.eql(pm.collectionVariables.get('secondUserId'));",
+                  "});",
+                  "",
+                  "pm.test('text is the edited one', function () {",
+                  "    pm.expect(pm.response.json().text).to.eql(pm.collectionVariables.get('postText'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/get/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "get",
+                "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post update - foreign post is not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{postId}}\",\n  \"text\": \"Hijacked\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post update - not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"99999999-9999-4999-8999-999999999999\",\n  \"text\": \"Nothing here\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post update - malformed id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"not-a-uuid\",\n  \"text\": \"Text\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post update - empty text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field text', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('text');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{postId}}\",\n  \"text\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post update - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{postId}}\",\n  \"text\": \"No token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post delete - foreign post is not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/delete/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "delete",
+                "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post delete - malformed id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field id', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/delete/not-a-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "delete",
+                "not-a-uuid"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post delete - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/delete/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "delete",
+                "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Friends",
+      "item": [
+        {
+          "name": "Friend set - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend set - idempotent repeat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend set - yourself",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend set - malformed userId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/not-a-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "not-a-uuid"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend set - unknown user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/99999999-9999-4999-8999-999999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "99999999-9999-4999-8999-999999999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend set - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend set - invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{invalidToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/set/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "set",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend delete - malformed userId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field userId', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('userId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/delete/not-a-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "delete",
+                "not-a-uuid"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend delete - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/friend/delete/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "delete",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feed",
+      "item": [
+        {
+          "name": "Feed - friend's existing post appears after friend set",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Лента итогово согласована (асинхронный fan-out): ждём, пока условие выполнится.",
+                  "const baseUrl = pm.variables.get('baseUrl');",
+                  "const token = pm.collectionVariables.get('token');",
+                  "const postId = pm.collectionVariables.get('postId');",
+                  "const postText = pm.collectionVariables.get('postText');",
+                  "let attempts = 0;",
+                  "function poll() {",
+                  "    pm.sendRequest({",
+                  "        url: baseUrl + '/post/feed?limit=100',",
+                  "        method: 'GET',",
+                  "        header: { Authorization: 'Bearer ' + token }",
+                  "    }, function (error, response) {",
+                  "        const posts = !error && response.code === 200 ? response.json() : null;",
+                  "        if ((posts && (posts.some(function (post) { return post.id === postId && post.text === postText; }))) || ++attempts >= 40) {",
+                  "            return;",
+                  "        }",
+                  "        setTimeout(poll, 250);",
+                  "    });",
+                  "}",
+                  "poll();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('contains the friend post with the edited text, newest first', function () {",
+                  "    const posts = pm.response.json();",
+                  "    pm.expect(posts).to.be.an('array');",
+                  "    const post = posts.find(function (item) { return item.id === pm.collectionVariables.get('postId'); });",
+                  "    pm.expect(post, 'friend post is in the feed').to.exist;",
+                  "    pm.expect(post.text).to.eql(pm.collectionVariables.get('postText'));",
+                  "    pm.expect(post.authorUserId).to.eql(pm.collectionVariables.get('secondUserId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post create - own post (first user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('returns generated uuid', function () {",
+                  "    pm.expect(pm.response.json().id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);",
+                  "    pm.collectionVariables.set('ownPostId', pm.response.json().id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"First user own post\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - own posts are excluded",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Даём асинхронной обработке время сработать, чтобы проверка отсутствия не прошла случайно.",
+                  "setTimeout(function () {}, 1000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('own posts are not in the feed', function () {",
+                  "    const ownPostId = pm.collectionVariables.get('ownPostId');",
+                  "    pm.expect(pm.response.json().map(function (post) { return post.id; })).to.not.include(ownPostId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - friend's new post arrives after fan-out",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Второй пользователь публикует ещё один пост уже после дружбы, ждём его в ленте первым.",
+                  "const baseUrl = pm.variables.get('baseUrl');",
+                  "const token = pm.collectionVariables.get('token');",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/post/create',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.collectionVariables.get('secondToken') },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ text: 'Second user newest post' }) }",
+                  "}, function (error, response) {",
+                  "    const newestPostId = response.json().id;",
+                  "    pm.collectionVariables.set('newestPostId', newestPostId);",
+                  "    let attempts = 0;",
+                  "    function poll() {",
+                  "        pm.sendRequest({",
+                  "            url: baseUrl + '/post/feed?limit=1',",
+                  "            method: 'GET',",
+                  "            header: { Authorization: 'Bearer ' + token }",
+                  "        }, function (pollError, pollResponse) {",
+                  "            const posts = !pollError && pollResponse.code === 200 ? pollResponse.json() : [];",
+                  "            if ((posts.length === 1 && posts[0].id === newestPostId) || ++attempts >= 40) {",
+                  "                return;",
+                  "            }",
+                  "            setTimeout(poll, 250);",
+                  "        });",
+                  "    }",
+                  "    poll();",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('newest post of the friend comes first', function () {",
+                  "    const posts = pm.response.json();",
+                  "    pm.expect(posts).to.have.lengthOf(1);",
+                  "    pm.expect(posts[0].id).to.eql(pm.collectionVariables.get('newestPostId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - default limit is 10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('at most 10 posts', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array').with.length.at.most(10);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - offset beyond the feed is empty",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('empty array', function () {",
+                  "    pm.expect(pm.response.json()).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?offset=1000&limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "1000"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - negative offset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field offset', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('offset');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?offset=-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "-1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - non-numeric offset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field offset', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('offset');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?offset=abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "abc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - zero limit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field limit', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('limit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?limit=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - limit above 100",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('has error message with field limit', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "    pm.expect(body.field).to.eql('limit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?limit=101",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "101"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{invalidToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend delete - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/delete/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "delete",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Friend delete - idempotent repeat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/friend/delete/{{secondUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "friend",
+                "delete",
+                "{{secondUserId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Feed - former friend's posts disappear",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Лента итогово согласована (асинхронный fan-out): ждём, пока условие выполнится.",
+                  "const baseUrl = pm.variables.get('baseUrl');",
+                  "const token = pm.collectionVariables.get('token');",
+                  "const postId = pm.collectionVariables.get('postId');",
+                  "const postText = pm.collectionVariables.get('postText');",
+                  "let attempts = 0;",
+                  "function poll() {",
+                  "    pm.sendRequest({",
+                  "        url: baseUrl + '/post/feed?limit=100',",
+                  "        method: 'GET',",
+                  "        header: { Authorization: 'Bearer ' + token }",
+                  "    }, function (error, response) {",
+                  "        const posts = !error && response.code === 200 ? response.json() : null;",
+                  "        if ((posts && (!posts.some(function (post) { return post.authorUserId === pm.collectionVariables.get('secondUserId'); }))) || ++attempts >= 40) {",
+                  "            return;",
+                  "        }",
+                  "        setTimeout(poll, 250);",
+                  "    });",
+                  "}",
+                  "poll();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('former friend posts are gone', function () {",
+                  "    const authors = pm.response.json().map(function (post) { return post.authorUserId; });",
+                  "    pm.expect(authors).to.not.include(pm.collectionVariables.get('secondUserId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/feed?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post delete - success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/delete/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "delete",
+                "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post get - after delete is not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/post/get/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "get",
+                "{{postId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Post delete - repeat is not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('has error message', function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.message).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/post/delete/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "post",
+                "delete",
+                "{{postId}}"
               ]
             }
           },

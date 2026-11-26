@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 // Сверка двух приложений: одинаковые запросы в оба, сравнение статуса, Content-Type, Allow и тела.
+// Кейсы друзей, постов и ленты идут с авторизацией и подготовленным состоянием (см. «Подготовка состояния»);
+// для них должны работать воркеры ленты обоих приложений (make up).
 // Запуск: php compare.php <urlNative> <urlSymfony>
 // Значения, различающиеся по природе (UUID пользователей, подпись токена), заменяются на плейсхолдеры.
 // Код выхода: 0 — новых расхождений нет, 1 — есть новые расхождения или устарела запись в списке известных, 2 — ошибка запуска.
@@ -17,11 +19,14 @@ if ($argc !== 3) {
 $apps = ['native' => rtrim($argv[1], '/'), 'symfony' => rtrim($argv[2], '/')];
 
 /** @return array{status:int, contentType:string, allow:string, body:string} */
-function send(string $baseUrl, string $method, string $path, ?string $body, ?string $contentType): array
+function send(string $baseUrl, string $method, string $path, ?string $body, ?string $contentType, ?string $authorization = null): array
 {
     $responseHeaders = [];
     $handle = curl_init($baseUrl . $path);
     $requestHeaders = ['Expect:'];
+    if ($authorization !== null) {
+        $requestHeaders[] = 'Authorization: ' . $authorization;
+    }
     if ($body !== null) {
         $requestHeaders[] = $contentType === null ? 'Content-Type:' : 'Content-Type: ' . $contentType;
         curl_setopt($handle, CURLOPT_POSTFIELDS, $body);
@@ -68,7 +73,7 @@ function normalize(string $text, array $knownIds): string
     foreach ($knownIds as $placeholder => $id) {
         $text = str_ireplace($id, $placeholder, $text);
     }
-    $text = preg_replace('/(v1\.<userId>\.)[0-9a-f]{64}/', '$1<hmac>', $text);
+    $text = preg_replace('/(v1\.<[A-Za-z0-9]+>\.)[0-9a-f]{64}/', '$1<hmac>', $text);
 
     return preg_replace('/' . UUID . '/', '<uuid>', $text);
 }
@@ -139,8 +144,33 @@ $password = 's3cret-pass!';
 
 // [имя, метод, путь, тело, Content-Type, дополнительно: получить созданного пользователя]
 $cases = [];
-$add = static function (string $name, string $method, string $path, ?string $body = null, ?string $type = JSON_TYPE, bool $fetchCreated = false) use (&$cases): void {
-    $cases[] = compact('name', 'method', 'path', 'body', 'type', 'fetchCreated');
+$add = static function (string $name, string $method, string $path, ?string $body = null, ?string $type = JSON_TYPE, bool|string $fetchCreated = false) use (&$cases): void {
+    $cases[] = compact('name', 'method', 'path', 'body', 'type', 'fetchCreated') + ['auth' => null, 'fresh' => false, 'repeat' => 1, 'followUp' => null];
+};
+
+// Кейсы друзей, постов и ленты (ДЗ «Лента постов»). Дополнительно к $add:
+// - $auth: значение заголовка Authorization; {tokenA} и {tokenB} подставляются токенами пользователей A и B конкретного приложения;
+// - options: 'type' (Content-Type), 'fetchCreated' => 'post' (после 201 получить созданный пост), 'fresh' => true (перед запросом
+//   пользователь A создаёт свежий пост, он доступен как {fresh}), 'repeat' => N (отправить запрос N раз подряд),
+//   'followUp' => путь (после запроса получить его без авторизации, например проверить результат).
+$addApi = static function (string $name, string $method, string $path, ?string $body = null, ?string $auth = null, array $options = []) use (&$cases): void {
+    $cases[] = [
+        'name' => $name,
+        'method' => $method,
+        'path' => $path,
+        'body' => $body,
+        'type' => array_key_exists('type', $options) ? $options['type'] : JSON_TYPE,
+        'fetchCreated' => $options['fetchCreated'] ?? false,
+        'auth' => $auth,
+        'fresh' => $options['fresh'] ?? false,
+        'repeat' => $options['repeat'] ?? 1,
+        'followUp' => $options['followUp'] ?? null,
+    ];
+};
+
+// Шаг между кейсами: действие в каждом приложении без сравнения ответов (например, дождаться состояния ленты).
+$step = static function (string $name, callable $action) use (&$cases): void {
+    $cases[] = ['name' => $name, 'step' => $action];
 };
 
 // --- регистрация ---
@@ -292,24 +322,392 @@ $add('routes: /index.php', 'GET', '/index.php');
 $add('routes: /user/get/../register', 'GET', '/user/get/../register');
 $add('routes: percent-encoded /lo%67in', 'POST', '/lo%67in', '{}');
 
+// Состояние сверки по приложениям (заполняется перед запуском кейсов, см. «Подготовка состояния» ниже).
+$state = [];
+
+/** Идентификаторы постов в ленте пользователя A в приложении $app. */
+$feedPostIds = static function (string $app) use (&$state, $apps): array {
+    $response = send($apps[$app], 'GET', '/post/feed?limit=100', null, null, 'Bearer ' . $state[$app]['tokenA']);
+    $posts = json_decode($response['body'], true);
+
+    return $response['status'] === 200 && is_array($posts) ? array_column($posts, 'id') : [];
+};
+
+/** Лента итогово согласована: ждём состояния, а не гадаем с паузами. Не дождались — ошибка запуска. */
+$waitUntil = static function (string $app, string $what, callable $condition): void {
+    $deadline = microtime(true) + 15;
+    while (microtime(true) < $deadline) {
+        if ($condition()) {
+            return;
+        }
+        usleep(100_000);
+    }
+    fwrite(STDERR, sprintf("%s: не дождались: %s\n", $app, $what));
+    exit(2);
+};
+
+// =====================================================================================================================
+// Друзья, посты и лента (ДЗ «Лента постов»).
+// Подготовка состояния (ниже, перед запуском): пользователь A (из регистрации выше) и пользователь B; B создал посты
+// {post1}, {post2}, {post3}; A добавил B в друзья. Лента A состоит ровно из этих трёх постов, пока кейсы не меняют дружбу
+// (это делают только кейсы в самом конце). Остальные кейсы изменяют лишь собственные посты A: они в ленту A не входят.
+// =====================================================================================================================
+$authA = 'Bearer {tokenA}';
+$authB = 'Bearer {tokenB}';
+$garbage = 'Bearer garbage';
+$unauthorized = [
+    'no token' => null,
+    'garbage token' => $garbage,
+    'basic scheme' => 'Basic {tokenA}',
+    'empty bearer' => 'Bearer ',
+    'two spaces' => 'Bearer  {tokenA}',
+    'token without scheme' => '{tokenA}',
+    'truncated token' => 'Bearer v1.{tokenA}',
+];
+$postText = static fn (string $text): string => json_encode(['text' => $text], JSON_UNESCAPED_UNICODE);
+
+// --- друзья: добавление ---
+$addApi('friend set: success', 'PUT', '/friend/set/{friendId}', null, $authA);
+$addApi('friend set: repeated call is idempotent', 'PUT', '/friend/set/{friendId}', null, $authA, ['repeat' => 2]);
+$addApi('friend set: uppercase id', 'PUT', '/friend/set/{friendIdUpper}', null, $authA);
+$addApi('friend set: lowercase bearer scheme', 'PUT', '/friend/set/{friendId}', null, 'bearer {tokenA}');
+$addApi('friend set: body is ignored', 'PUT', '/friend/set/{friendId}', '{"x":1}', $authA);
+$addApi('friend set: yourself', 'PUT', '/friend/set/{userId}', null, $authA);
+$addApi('friend set: unknown user', 'PUT', '/friend/set/99999999-9999-4999-8999-999999999999', null, $authA);
+$addApi('friend set: invalid id', 'PUT', '/friend/set/not-a-uuid', null, $authA);
+$addApi('friend set: numeric id', 'PUT', '/friend/set/123', null, $authA);
+$addApi('friend set: id with unicode', 'PUT', '/friend/set/%D0%B8%D0%B4', null, $authA);
+$addApi('friend set: id without dashes', 'PUT', '/friend/set/99999999999949998999999999999999', null, $authA);
+foreach ($unauthorized as $label => $header) {
+    $addApi("friend set: $label", 'PUT', '/friend/set/{friendId}', null, $header);
+}
+$addApi('friend set: authorization is checked before the id', 'PUT', '/friend/set/not-a-uuid', null, $garbage);
+$addApi('friend set: trailing slash', 'PUT', '/friend/set/{friendId}/', null, $authA);
+$addApi('friend set: extra segment', 'PUT', '/friend/set/{friendId}/extra', null, $authA);
+$addApi('friend set: no id', 'PUT', '/friend/set/', null, $authA);
+$addApi('friend set: no id and no slash', 'PUT', '/friend/set', null, $authA);
+foreach (['GET', 'POST', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH'] as $method) {
+    $addApi("friend set: $method not allowed", $method, '/friend/set/{friendId}', null, $authA);
+}
+
+// --- друзья: удаление (успешное удаление меняет ленту, оно в конце) ---
+$addApi('friend delete: stranger is not an error', 'PUT', '/friend/delete/99999999-9999-4999-8999-999999999999', null, $authA);
+$addApi('friend delete: yourself is not an error', 'PUT', '/friend/delete/{userId}', null, $authA);
+$addApi('friend delete: invalid id', 'PUT', '/friend/delete/not-a-uuid', null, $authA);
+$addApi('friend delete: numeric id', 'PUT', '/friend/delete/123', null, $authA);
+foreach ($unauthorized as $label => $header) {
+    $addApi("friend delete: $label", 'PUT', '/friend/delete/{friendId}', null, $header);
+}
+$addApi('friend delete: authorization is checked before the id', 'PUT', '/friend/delete/not-a-uuid', null, $garbage);
+$addApi('friend delete: trailing slash', 'PUT', '/friend/delete/{friendId}/', null, $authA);
+$addApi('friend delete: no id', 'PUT', '/friend/delete/', null, $authA);
+foreach (['GET', 'POST', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("friend delete: $method not allowed", $method, '/friend/delete/{friendId}', null, $authA);
+}
+
+// --- посты: создание (автор A) ---
+$addApi('post create: success', 'POST', '/post/create', $postText('Привет, мир'), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: text is trimmed', 'POST', '/post/create', $postText("  \n Пост с пробелами \t "), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: line breaks are kept', 'POST', '/post/create', $postText("Первая\n\nТретья"), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: CRLF becomes LF', 'POST', '/post/create', $postText("Первая\r\nВторая"), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: unicode and quotes', 'POST', '/post/create', $postText("Эмодзи 🙂 «ёлочки» \"кавычки\" '; DROP TABLE posts; --"), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: 2000 ASCII characters', 'POST', '/post/create', $postText(str_repeat('a', 2000)), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: 2000 multibyte characters', 'POST', '/post/create', $postText(str_repeat('я', 2000)), $authA, ['fetchCreated' => 'post']);
+$addApi('post create: 2001 characters', 'POST', '/post/create', $postText(str_repeat('a', 2001)), $authA);
+$addApi('post create: 2001 multibyte characters', 'POST', '/post/create', $postText(str_repeat('я', 2001)), $authA);
+$addApi('post create: extra unknown field', 'POST', '/post/create', '{"text":"x","unknown":1}', $authA, ['fetchCreated' => 'post']);
+$addApi('post create: empty text', 'POST', '/post/create', $postText(''), $authA);
+$addApi('post create: blank text', 'POST', '/post/create', $postText("   \n\t "), $authA);
+$addApi('post create: missing text', 'POST', '/post/create', '{}', $authA);
+$addApi('post create: text number', 'POST', '/post/create', '{"text":123}', $authA);
+$addApi('post create: text null', 'POST', '/post/create', '{"text":null}', $authA);
+$addApi('post create: text array', 'POST', '/post/create', '{"text":["x"]}', $authA);
+$addApi('post create: text object', 'POST', '/post/create', '{"text":{"a":1}}', $authA);
+$addApi('post create: text bool', 'POST', '/post/create', '{"text":true}', $authA);
+$addApi('post create: tab inside', 'POST', '/post/create', $postText("до\tпосле"), $authA);
+$addApi('post create: escape character inside', 'POST', '/post/create', '{"text":"до\u001bпосле"}', $authA);
+$addApi('post create: null character inside', 'POST', '/post/create', '{"text":"до\u0000после"}', $authA);
+$addApi('post create: lone carriage return inside', 'POST', '/post/create', $postText("до\rпосле"), $authA);
+$addApi('post create: invalid UTF-8 in body', 'POST', '/post/create', "{\"text\":\"\xC3\x28\"}", $authA);
+$addApi('post create: body is not JSON', 'POST', '/post/create', 'not json', $authA);
+$addApi('post create: body truncated JSON', 'POST', '/post/create', '{"text":', $authA);
+$addApi('post create: empty body', 'POST', '/post/create', '', $authA);
+$addApi('post create: JSON array body', 'POST', '/post/create', '[]', $authA);
+$addApi('post create: JSON string body', 'POST', '/post/create', '"x"', $authA);
+$addApi('post create: JSON null body', 'POST', '/post/create', 'null', $authA);
+$addApi('post create: no body at all', 'POST', '/post/create', null, $authA);
+$addApi('post create: text/plain content type', 'POST', '/post/create', $postText('x'), $authA, ['type' => 'text/plain', 'fetchCreated' => 'post']);
+$addApi('post create: no content type', 'POST', '/post/create', $postText('x'), $authA, ['type' => null, 'fetchCreated' => 'post']);
+$addApi('post create: form content type', 'POST', '/post/create', $postText('x'), $authA, ['type' => 'application/x-www-form-urlencoded', 'fetchCreated' => 'post']);
+foreach ($unauthorized as $label => $header) {
+    $addApi("post create: $label", 'POST', '/post/create', $postText('x'), $header);
+}
+$addApi('post create: authorization is checked before the body', 'POST', '/post/create', 'not json', $garbage);
+$addApi('post create: authorization is checked before validation', 'POST', '/post/create', $postText(''), $garbage);
+$addApi('post create: valid token, malformed JSON', 'POST', '/post/create', 'not json', $authA);
+$addApi('post create: trailing slash', 'POST', '/post/create/', $postText('x'), $authA);
+foreach (['GET', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("post create: $method not allowed", $method, '/post/create', null, $authA);
+}
+
+// --- посты: получение (публичное) ---
+$addApi('post get: success', 'GET', '/post/get/{post1}');
+$addApi('post get: uppercase id', 'GET', '/post/get/{post1Upper}');
+$addApi('post get: not found', 'GET', '/post/get/99999999-9999-4999-8999-999999999999');
+$addApi('post get: invalid id', 'GET', '/post/get/not-a-uuid');
+$addApi('post get: numeric id', 'GET', '/post/get/123');
+$addApi('post get: id with unicode', 'GET', '/post/get/%D0%B8%D0%B4');
+$addApi('post get: id without dashes', 'GET', '/post/get/99999999999949998999999999999999');
+$addApi('post get: trailing slash', 'GET', '/post/get/{post1}/');
+$addApi('post get: extra segment', 'GET', '/post/get/{post1}/extra');
+$addApi('post get: no id', 'GET', '/post/get/');
+$addApi('post get: no id and no slash', 'GET', '/post/get');
+$addApi('post get: query string ignored', 'GET', '/post/get/{post1}?x=1');
+$addApi('post get: valid token is ignored', 'GET', '/post/get/{post1}', null, $authA);
+$addApi('post get: garbage token is ignored', 'GET', '/post/get/{post1}', null, $garbage);
+foreach (['HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'] as $method) {
+    $addApi("post get: $method not allowed", $method, '/post/get/{post1}');
+}
+
+// --- посты: изменение (свежий пост A) ---
+$update = static fn (string $id, string $text): string => json_encode(['id' => $id, 'text' => $text], JSON_UNESCAPED_UNICODE);
+$addApi('post update: success', 'PUT', '/post/update', $update('{fresh}', 'Новый текст'), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: text is trimmed', 'PUT', '/post/update', $update('{fresh}', "  Обрезанный \n"), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: uppercase id', 'PUT', '/post/update', $update('{freshUpper}', 'Через верхний регистр'), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: same text', 'PUT', '/post/update', $update('{fresh}', 'Fresh post'), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: repeated call', 'PUT', '/post/update', $update('{fresh}', 'Дважды'), $authA, ['fresh' => true, 'repeat' => 2, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: extra unknown field', 'PUT', '/post/update', '{"id":"{fresh}","text":"x","unknown":1}', $authA, ['fresh' => true]);
+$addApi('post update: foreign post looks missing', 'PUT', '/post/update', $update('{post1}', 'Взлом'), $authA, ['followUp' => '/post/get/{post1}']);
+$addApi('post update: foreign post with the author token of another user', 'PUT', '/post/update', $update('{fresh}', 'Чужой токен'), $authB, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: unknown post', 'PUT', '/post/update', $update('99999999-9999-4999-8999-999999999999', 'x'), $authA);
+$addApi('post update: invalid id', 'PUT', '/post/update', $update('not-a-uuid', 'x'), $authA);
+$addApi('post update: numeric id value', 'PUT', '/post/update', '{"id":123,"text":"x"}', $authA);
+$addApi('post update: id null', 'PUT', '/post/update', '{"id":null,"text":"x"}', $authA);
+$addApi('post update: id array', 'PUT', '/post/update', '{"id":["x"],"text":"x"}', $authA);
+$addApi('post update: missing id', 'PUT', '/post/update', '{"text":"x"}', $authA);
+$addApi('post update: missing text', 'PUT', '/post/update', '{"id":"{fresh}"}', $authA, ['fresh' => true]);
+$addApi('post update: text number', 'PUT', '/post/update', '{"id":"{fresh}","text":5}', $authA, ['fresh' => true]);
+$addApi('post update: empty text', 'PUT', '/post/update', $update('{fresh}', ''), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: blank text', 'PUT', '/post/update', $update('{fresh}', "  \n "), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: 2000 characters', 'PUT', '/post/update', $update('{fresh}', str_repeat('я', 2000)), $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post update: 2001 characters', 'PUT', '/post/update', $update('{fresh}', str_repeat('я', 2001)), $authA, ['fresh' => true]);
+$addApi('post update: tab inside', 'PUT', '/post/update', $update('{fresh}', "до\tпосле"), $authA, ['fresh' => true]);
+$addApi('post update: malformed id is reported before invalid text', 'PUT', '/post/update', $update('not-a-uuid', ''), $authA);
+$addApi('post update: invalid text of a foreign post is reported before not found', 'PUT', '/post/update', $update('{post1}', ''), $authA);
+$addApi('post update: body is not JSON', 'PUT', '/post/update', 'not json', $authA);
+$addApi('post update: empty body', 'PUT', '/post/update', '', $authA);
+$addApi('post update: JSON array body', 'PUT', '/post/update', '[]', $authA);
+$addApi('post update: empty object body', 'PUT', '/post/update', '{}', $authA);
+$addApi('post update: no body at all', 'PUT', '/post/update', null, $authA);
+$addApi('post update: text/plain content type', 'PUT', '/post/update', $update('{fresh}', 'plain'), $authA, ['fresh' => true, 'type' => 'text/plain']);
+foreach ($unauthorized as $label => $header) {
+    $addApi("post update: $label", 'PUT', '/post/update', $update('{post1}', 'x'), $header);
+}
+$addApi('post update: authorization is checked before the body', 'PUT', '/post/update', 'not json', $garbage);
+$addApi('post update: authorization is checked before validation', 'PUT', '/post/update', $update('not-a-uuid', ''), $garbage);
+$addApi('post update: valid token, malformed JSON', 'PUT', '/post/update', 'not json', $authA);
+$addApi('post update: trailing slash', 'PUT', '/post/update/', $update('{post1}', 'x'), $authA);
+$addApi('post update: id in the path', 'PUT', '/post/update/{post1}', '{"text":"x"}', $authA);
+foreach (['GET', 'POST', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("post update: $method not allowed", $method, '/post/update', null, $authA);
+}
+
+// --- посты: удаление (свежий пост A) ---
+$addApi('post delete: success', 'PUT', '/post/delete/{fresh}', null, $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post delete: repeated call is not found', 'PUT', '/post/delete/{fresh}', null, $authA, ['fresh' => true, 'repeat' => 2]);
+$addApi('post delete: uppercase id', 'PUT', '/post/delete/{freshUpper}', null, $authA, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post delete: body is ignored', 'PUT', '/post/delete/{fresh}', '{"x":1}', $authA, ['fresh' => true]);
+$addApi('post delete: foreign post looks missing', 'PUT', '/post/delete/{post1}', null, $authA, ['followUp' => '/post/get/{post1}']);
+$addApi('post delete: own post with the token of another user', 'PUT', '/post/delete/{fresh}', null, $authB, ['fresh' => true, 'followUp' => '/post/get/{fresh}']);
+$addApi('post delete: unknown post', 'PUT', '/post/delete/99999999-9999-4999-8999-999999999999', null, $authA);
+$addApi('post delete: invalid id', 'PUT', '/post/delete/not-a-uuid', null, $authA);
+$addApi('post delete: numeric id', 'PUT', '/post/delete/123', null, $authA);
+$addApi('post delete: id with unicode', 'PUT', '/post/delete/%D0%B8%D0%B4', null, $authA);
+foreach ($unauthorized as $label => $header) {
+    $addApi("post delete: $label", 'PUT', '/post/delete/{post1}', null, $header);
+}
+$addApi('post delete: authorization is checked before the id', 'PUT', '/post/delete/not-a-uuid', null, $garbage);
+$addApi('post delete: trailing slash', 'PUT', '/post/delete/{post1}/', null, $authA);
+$addApi('post delete: no id', 'PUT', '/post/delete/', null, $authA);
+foreach (['GET', 'POST', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("post delete: $method not allowed", $method, '/post/delete/{post1}', null, $authA);
+}
+
+// --- лента: A дружит с B, у B три поста (новые первыми: post3, post2, post1) ---
+$feed = static fn (string $query = ''): string => '/post/feed' . ($query === '' ? '' : '?' . $query);
+$addApi('feed: default page', 'GET', $feed(), null, $authA);
+$addApi('feed: limit 1', 'GET', $feed('limit=1'), null, $authA);
+$addApi('feed: limit 2 offset 1', 'GET', $feed('limit=2&offset=1'), null, $authA);
+$addApi('feed: offset 1', 'GET', $feed('offset=1'), null, $authA);
+$addApi('feed: offset 2 limit 100', 'GET', $feed('offset=2&limit=100'), null, $authA);
+$addApi('feed: offset at the end', 'GET', $feed('offset=3'), null, $authA);
+$addApi('feed: offset 1000', 'GET', $feed('offset=1000&limit=100'), null, $authA);
+$addApi('feed: huge offset', 'GET', $feed('offset=99999999999999999999999'), null, $authA);
+$addApi('feed: limit 100', 'GET', $feed('limit=100'), null, $authA);
+$addApi('feed: leading zeros', 'GET', $feed('offset=001&limit=010'), null, $authA);
+$addApi('feed: unknown parameters are ignored', 'GET', $feed('x=1&offset=1'), null, $authA);
+$addApi('feed: duplicate parameter', 'GET', $feed('limit=1&limit=2'), null, $authA);
+$addApi('feed: limit 101', 'GET', $feed('limit=101'), null, $authA);
+$addApi('feed: limit 0', 'GET', $feed('limit=0'), null, $authA);
+$addApi('feed: negative limit', 'GET', $feed('limit=-1'), null, $authA);
+$addApi('feed: huge limit', 'GET', $feed('limit=99999999999999999999999'), null, $authA);
+$addApi('feed: limit letters', 'GET', $feed('limit=abc'), null, $authA);
+$addApi('feed: empty limit', 'GET', $feed('limit='), null, $authA);
+$addApi('feed: limit fraction', 'GET', $feed('limit=1.5'), null, $authA);
+$addApi('feed: limit exponent', 'GET', $feed('limit=1e1'), null, $authA);
+$addApi('feed: limit with space', 'GET', $feed('limit=%205'), null, $authA);
+$addApi('feed: limit with plus sign', 'GET', $feed('limit=%2B5'), null, $authA);
+$addApi('feed: limit array', 'GET', $feed('limit[]=1'), null, $authA);
+$addApi('feed: negative offset', 'GET', $feed('offset=-1'), null, $authA);
+$addApi('feed: offset letters', 'GET', $feed('offset=abc'), null, $authA);
+$addApi('feed: empty offset', 'GET', $feed('offset='), null, $authA);
+$addApi('feed: offset fraction', 'GET', $feed('offset=1.5'), null, $authA);
+$addApi('feed: offset array', 'GET', $feed('offset[]=1'), null, $authA);
+$addApi('feed: invalid offset is reported before invalid limit', 'GET', $feed('offset=-1&limit=0'), null, $authA);
+$addApi('feed: friendless user has an empty feed', 'GET', $feed(), null, $authB);
+foreach ($unauthorized as $label => $header) {
+    $addApi("feed: $label", 'GET', $feed(), null, $header);
+}
+$addApi('feed: authorization is checked before the page parameters', 'GET', $feed('limit=0'), null, $garbage);
+$addApi('feed: trailing slash', 'GET', '/post/feed/', null, $authA);
+foreach (['POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("feed: $method not allowed", $method, $feed(), null, $authA);
+}
+
+// --- дружба меняет ленту (в конце: после этих кейсов лента A меняется) ---
+$addApi('friend delete: success', 'PUT', '/friend/delete/{friendId}', null, $authA);
+$addApi('friend delete: repeated call is idempotent', 'PUT', '/friend/delete/{friendId}', null, $authA, ['repeat' => 2]);
+$step('wait until the feed is empty after the friend was removed', static function (string $app) use (&$state, $apps, $feedPostIds, $waitUntil): void {
+    $waitUntil($app, 'feed of A is empty', static fn (): bool => $feedPostIds($app) === []);
+});
+$addApi('feed: empty after the friend was removed', 'GET', $feed(), null, $authA);
+$addApi('friend set: again after removal', 'PUT', '/friend/set/{friendId}', null, $authA);
+$step('wait until the feed is restored by the backfill', static function (string $app) use ($feedPostIds, $waitUntil): void {
+    $waitUntil($app, 'feed of A has three posts again', static fn (): bool => count($feedPostIds($app)) === 3);
+});
+$addApi('feed: restored after the friend was added again', 'GET', $feed(), null, $authA);
+
+// --- Подготовка состояния для кейсов друзей, постов и ленты ---
+// В каждом приложении: пользователь A (зарегистрирован выше) получает токен, регистрируется пользователь B, B создаёт три поста,
+// A создаёт один пост и добавляет B в друзья. Ждём, пока лента A не наполнится.
+$loginToken = static function (string $name, string $baseUrl, string $userId) use ($password): string {
+    $response = send($baseUrl, 'POST', '/login', json_encode(['userId' => $userId, 'password' => $password]), JSON_TYPE);
+    $token = json_decode($response['body'], true)['token'] ?? null;
+    if ($response['status'] !== 200 || !is_string($token)) {
+        fwrite(STDERR, sprintf("%s: не удалось войти (%d): %s\n", $name, $response['status'], $response['body']));
+        exit(2);
+    }
+
+    return $token;
+};
+$createdId = static function (string $name, array $response, int $expectedStatus): string {
+    $id = json_decode($response['body'], true)['id'] ?? null;
+    if ($response['status'] !== $expectedStatus || !is_string($id)) {
+        fwrite(STDERR, sprintf("%s: подготовка состояния не удалась (%d): %s\n", $name, $response['status'], $response['body']));
+        exit(2);
+    }
+
+    return $id;
+};
+foreach ($apps as $name => $baseUrl) {
+    $tokenA = $loginToken($name, $baseUrl, $users[$name]);
+    $friendId = $createdId($name, send($baseUrl, 'POST', '/user/register', payload(['firstName' => 'Anna', 'lastName' => 'Sidorova']), JSON_TYPE), 201);
+    $tokenB = $loginToken($name, $baseUrl, $friendId);
+
+    $posts = [];
+    foreach ([1, 2, 3] as $number) {
+        $posts[$number] = $createdId($name, send($baseUrl, 'POST', '/post/create', json_encode(['text' => 'Compare post ' . $number]), JSON_TYPE, 'Bearer ' . $tokenB), 201);
+        usleep(10_000);
+    }
+    $ownPost = $createdId($name, send($baseUrl, 'POST', '/post/create', json_encode(['text' => 'Own post of A']), JSON_TYPE, 'Bearer ' . $tokenA), 201);
+
+    $friendship = send($baseUrl, 'PUT', '/friend/set/' . $friendId, null, null, 'Bearer ' . $tokenA);
+    if ($friendship['status'] !== 204) {
+        fwrite(STDERR, sprintf("%s: не удалось добавить друга (%d): %s\n", $name, $friendship['status'], $friendship['body']));
+        exit(2);
+    }
+
+    $state[$name] = ['userId' => $users[$name], 'friendId' => $friendId, 'tokenA' => $tokenA, 'tokenB' => $tokenB, 'posts' => $posts, 'ownPost' => $ownPost];
+}
+foreach (array_keys($apps) as $name) {
+    $waitUntil($name, 'лента A содержит три поста', static fn (): bool => count($feedPostIds($name)) === 3);
+}
+
+$replacements = static function (array $state, ?string $fresh): array {
+    $map = [
+        '{userId}' => $state['userId'],
+        '{userIdUpper}' => strtoupper($state['userId']),
+        '{friendId}' => $state['friendId'],
+        '{friendIdUpper}' => strtoupper($state['friendId']),
+        '{post1}' => $state['posts'][1],
+        '{post1Upper}' => strtoupper($state['posts'][1]),
+        '{post2}' => $state['posts'][2],
+        '{post3}' => $state['posts'][3],
+        '{tokenA}' => $state['tokenA'],
+        '{tokenB}' => $state['tokenB'],
+    ];
+    if ($fresh !== null) {
+        $map['{fresh}'] = $fresh;
+        $map['{freshUpper}'] = strtoupper($fresh);
+    }
+
+    return $map;
+};
+$fill = static fn (?string $text, array $map): ?string => $text === null ? null : strtr($text, $map);
+
 $failures = 0;
 $known = 0;
 $stale = 0;
 foreach ($cases as $case) {
+    if (isset($case['step'])) {
+        foreach (array_keys($apps) as $name) {
+            ($case['step'])($name);
+        }
+        continue;
+    }
+
     $results = [];
     foreach ($apps as $name => $baseUrl) {
-        $knownIds = ['<userId>' => $users[$name]];
-        $path = str_replace(['{userId}', '{userIdUpper}'], [$users[$name], strtoupper($users[$name])], $case['path']);
-        $body = $case['body'] === null ? null : str_replace(['{userId}', '{userIdUpper}'], [$users[$name], strtoupper($users[$name])], $case['body']);
-        $response = send($baseUrl, $case['method'], $path, $body, $case['type']);
-        $parts = [$response];
+        $current = $state[$name];
+
+        $fresh = null;
+        if ($case['fresh']) {
+            $fresh = $createdId($name, send($baseUrl, 'POST', '/post/create', json_encode(['text' => 'Fresh post']), JSON_TYPE, 'Bearer ' . $current['tokenA']), 201);
+        }
+        $map = $replacements($current, $fresh);
+
+        $knownIds = [
+            '<userId>' => $current['userId'],
+            '<friendId>' => $current['friendId'],
+            '<post1>' => $current['posts'][1],
+            '<post2>' => $current['posts'][2],
+            '<post3>' => $current['posts'][3],
+            '<ownPost>' => $current['ownPost'],
+        ];
+        if ($fresh !== null) {
+            $knownIds['<fresh>'] = $fresh;
+        }
+
+        $path = $fill($case['path'], $map);
+        $body = $fill($case['body'], $map);
+        $authorization = $fill($case['auth'], $map);
+
+        $parts = [];
+        for ($attempt = 0; $attempt < $case['repeat']; $attempt++) {
+            $parts[] = send($baseUrl, $case['method'], $path, $body, $case['type'], $authorization);
+        }
+        $response = $parts[0];
 
         if ($case['fetchCreated'] && $response['status'] === 201) {
-            $createdId = json_decode($response['body'], true)['id'] ?? null;
-            if (is_string($createdId)) {
-                $knownIds['<created>'] = $createdId;
-                $parts[] = send($baseUrl, 'GET', '/user/get/' . $createdId, null, null);
+            $createdEntityId = json_decode($response['body'], true)['id'] ?? null;
+            if (is_string($createdEntityId)) {
+                $knownIds['<created>'] = $createdEntityId;
+                $parts[] = send($baseUrl, 'GET', ($case['fetchCreated'] === 'post' ? '/post/get/' : '/user/get/') . $createdEntityId, null, null);
             }
+        }
+
+        if ($case['followUp'] !== null) {
+            $parts[] = send($baseUrl, 'GET', $fill($case['followUp'], $map), null, null);
         }
 
         $results[$name] = array_map(static fn (array $part): array => [
@@ -342,7 +740,7 @@ foreach ($cases as $case) {
     printf("  DIFF  %s   [%s %s]\n", $case['name'], $case['method'], $case['path']);
     foreach ($results as $name => $parts) {
         foreach ($parts as $index => $part) {
-            printf("        %-8s%s status=%d content-type=%s allow=%s\n", $name, $index === 0 ? '' : ' (get created)', $part['status'], $part['contentType'] ?: '-', $part['allow'] ?: '-');
+            printf("        %-8s%s status=%d content-type=%s allow=%s\n", $name, $index === 0 ? '' : sprintf(' (part %d)', $index + 1), $part['status'], $part['contentType'] ?: '-', $part['allow'] ?: '-');
             printf("                body: %s\n", str_replace("\n", ' ', substr($part['body'], 0, 300)));
         }
     }

@@ -6,6 +6,7 @@
         "php": "^8.4",
         "ext-pdo": "*",
         "ext-pdo_pgsql": "*",
+        "ext-redis": "*",
         "social-network/core": "@dev",
         "symfony/console": "^8.1",
         "symfony/framework-bundle": "^8.1",

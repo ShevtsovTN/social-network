@@ -9,10 +9,22 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - `src/Kernel.php`: ядро на `MicroKernelTrait`. Кэш и логи пишет в `APP_VAR_DIR`.
 - `config/`: `bundles.php`, `services.yaml`, `routes.yaml` (атрибуты из `Presentation/Http`), `packages/`.
 - `src/Infrastructure/Persistence/`: `PdoUserRepository`, `PrimaryFallbackUserRepository` (чтение с реплики с возвратом к primary
-  при промахе), фабрика PDO-подключения.
-- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов.
+  при промахе), фабрика PDO-подключения; для ДЗ «Лента постов»: `PdoPostRepository`, `PdoFriendshipRepository`, `PdoFeedSource`
+  (копии классов `apps/native`, отличается только namespace: приложения не зависят друг от друга).
+- `src/Infrastructure/Security/`: хешер на argon2id, выпуск и проверка токенов, `RandomPostIdGenerator` (UUIDv7).
+- `src/Infrastructure/Redis/` и `src/Infrastructure/Queue/` (ДЗ «Лента постов»): `RedisConnection`, `RedisKeyspace`, `LuaScript`, `RedisFeedCache`,
+  `RedisPostCache`, `FeedEventSerializer`, `RedisFeedEventPublisher`, `RedisFeedEventConsumer`. Копии классов `apps/native`
+  (отличаются namespace и префиксом `[symfony]` в логах): те же Lua-скрипты, TTL, длина стрима, таймауты. Описание — в `apps/native/CLAUDE.md`.
+  Меняя один из этих классов, меняйте оба приложения: нагрузочное сравнение честно только при одинаковом подходе.
+- `src/Presentation/Console/FeedWorkerCommand`: команда `feed:work`, воркер ленты (цикл вокруг use case `ProcessNextFeedEvent`; при ошибке
+  инфраструктуры завершается с кодом 1, перезапуск делает docker compose). Запускать от `www-data`. Сервисы воркера в `services.yaml`:
+  `redis.connection.worker` (обычное подключение, таймаут чтения 10 с), `feed_cache.worker`, `post_cache.worker`, потребитель очереди
+  (имя из `HOSTNAME`), `ApplyFeedEventHandler` на primary.
 - `src/Presentation/Http/`: подкаталоги по ответственности: `Controller/`, `Request/` (`JsonBody`, `QueryParameters`, `MalformedRequest`),
-  `Response/` (`ApiJsonResponse`, `UserPayload`), `Routing/` (`StrictRoutingListener`), `Error/` (`ApiExceptionListener`).
+  `Response/` (`ApiJsonResponse`, `NoContentResponse` для 204, `UserPayload`, `PostPayload`), `Routing/` (`StrictRoutingListener`),
+  `Error/` (`ApiExceptionListener`), `Auth/` (`RequestAuthenticator`: токен из `Authorization: Bearer` в use case `Authenticate`;
+  разбор заголовка — `Request/BearerToken`). Контроллеры друзей, постов и ленты тонкие, как остальные: аутентификация, разбор запроса,
+  вызов use case, ответ; `offset` и `limit` ленты передаются в `core` строками как пришли.
 
 ## Правила
 - Минимальный набор компонентов: http-kernel, routing, dependency-injection
@@ -25,13 +37,24 @@ Presentation и Infrastructure поверх `core`. Бизнес-логики з
 - Таймауты соединения с БД в `PdoConnectionFactory` (`PDO::ATTR_TIMEOUT` и `tcp_user_timeout` в DSN) одинаковы в обоих приложениях.
   `connect_timeout` в DSN использовать нельзя: pdo_pgsql дописывает свой (30 с) позже, и он перекрывает. На DNS эти таймауты
   не действуют (за него отвечает `dns_opt` в compose).
-- Без Doctrine и любого ORM. Только PDO с prepared statements.
+- Без Doctrine и любого ORM. Только PDO с prepared statements. Запросы статические: даже список id передаётся одним
+  параметром-массивом (`ANY(CAST(:ids AS uuid[]))`).
+- Бизнес-логики в `symfony` нет: проверка владельца поста, границы и значения по умолчанию страницы ленты, вместимость ленты (1000),
+  правила дружбы и текста поста живут в `core`. Здесь только SQL, Redis-команды, разбор HTTP и маппинг ошибок.
 - Infrastructure реализует порты из `core` и не содержит бизнес-правил.
   Реализации по подходу эквивалентны `apps/native`.
 - Сервисы `core` и свои реализации портов регистрируем в `services.yaml` явно,
   привязывая интерфейсы к реализациям.
 - Атрибуты и классы Symfony допустимы только в Infrastructure и Presentation.
-- Контроллеры тонкие: разобрать запрос, вызвать handler, вернуть ответ.
+- Контроллеры тонкие: разобрать запрос, вызвать handler, вернуть ответ. Отступления от стандартных REST-практик из контракта
+  (удаление через PUT, `/friend/set`, 204) помечены строкой-комментарием у `#[Route]`.
+- Роутинг чтения и записи ленты (в `services.yaml`, как в `native`): создание, правка, удаление постов, друзья, `GET /post/get/{id}`
+  и воркер работают с primary; холодная пересборка ленты и тела постов для страницы ленты читают реплику.
+  `redis.connection` постоянное (php-fpm), открывается при первой команде.
+- Маппинг ошибок в `ApiExceptionListener`: поле `friendId` домена в ответе называется `userId` (так зовётся параметр пути).
+- Тесты: `tests/Unit` (разбор Authorization, параметры запроса, маппинг ошибок, 204) без инфраструктуры, `tests/Integration`
+  на реальных PostgreSQL и Redis. Сквозная проверка контракта: Postman-коллекция через newman. Проверка контейнера DI:
+  `bin/console lint:container` и `cache:warmup` в prod.
 - Формат ответов и коды ошибок строго по `docs/openapi.json`, идентично `apps/native`.
 - Интеграционные тесты наследуют contract-тесты из `core`.
 - Для замеров: `APP_ENV=prod`, `APP_DEBUG=0`, прогретый кэш,

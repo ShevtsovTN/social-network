@@ -16,6 +16,7 @@ final readonly class Request
         public string $path,
         private string $rawBody,
         private array $queryParameters,
+        private string $authorization,
     ) {
     }
 
@@ -24,15 +25,32 @@ final readonly class Request
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $path = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/');
 
-        return new self($method, $path, (string) file_get_contents('php://input'), $_GET);
+        // php-fpm передаёт заголовок Authorization как HTTP_AUTHORIZATION; REDIRECT_ вариант встречается за внутренним перенаправлением.
+        $authorization = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+
+        return new self($method, $path, (string) file_get_contents('php://input'), $_GET, $authorization);
     }
 
     /**
      * @param array<array-key, mixed> $queryParameters
      */
-    public static function fromParts(string $method, string $path, string $rawBody, array $queryParameters = []): self
+    public static function fromParts(
+        string $method,
+        string $path,
+        string $rawBody,
+        array $queryParameters = [],
+        string $authorization = '',
+    ): self {
+        return new self($method, $path, $rawBody, $queryParameters, $authorization);
+    }
+
+    /**
+     * Токен из заголовка «Authorization: Bearer <token>» без префикса. Пустая строка, если заголовка нет
+     * или схема не Bearer: решение «пускать или нет» принимает use case Authenticate, а не разбор заголовка.
+     */
+    public function bearerToken(): string
     {
-        return new self($method, $path, $rawBody, $queryParameters);
+        return preg_match('/^Bearer ([^\s]+)$/iD', $this->authorization, $matches) === 1 ? $matches[1] : '';
     }
 
     public function query(): QueryParameters
