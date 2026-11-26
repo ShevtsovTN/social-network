@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 // Сверка двух приложений: одинаковые запросы в оба, сравнение статуса, Content-Type, Allow и тела.
-// Кейсы друзей, постов и ленты идут с авторизацией и подготовленным состоянием (см. «Подготовка состояния»);
+// Кейсы друзей, постов, ленты и диалогов идут с авторизацией и подготовленным состоянием (см. «Подготовка состояния»);
 // для них должны работать воркеры ленты обоих приложений (make up).
 // Запуск: php compare.php <urlNative> <urlSymfony>
 // Значения, различающиеся по природе (UUID пользователей, подпись токена), заменяются на плейсхолдеры.
@@ -587,6 +587,104 @@ $step('wait until the feed is restored by the backfill', static function (string
 });
 $addApi('feed: restored after the friend was added again', 'GET', $feed(), null, $authA);
 
+// =====================================================================================================================
+// Диалоги (ДЗ «Шардинг диалогов»). Подготовка состояния (ниже): в диалоге A и B три сообщения — {message1} от B,
+// {message2} от A, {message3} от B. Сначала кейсы чтения этого диалога, затем отправка (она его дополняет).
+// =====================================================================================================================
+$list = static fn (string $userId, string $query = ''): string => '/dialog/' . $userId . '/list' . ($query === '' ? '' : '?' . $query);
+$unknownUser = '99999999-9999-4999-8999-999999999999';
+
+// --- диалог: чтение ---
+$addApi('dialog list: default page', 'GET', $list('{friendId}'), null, $authA);
+$addApi('dialog list: same dialog for the other side', 'GET', $list('{userId}'), null, $authB);
+$addApi('dialog list: uppercase userId', 'GET', $list('{friendIdUpper}'), null, $authA);
+$addApi('dialog list: limit 1', 'GET', $list('{friendId}', 'limit=1'), null, $authA);
+$addApi('dialog list: limit 2', 'GET', $list('{friendId}', 'limit=2'), null, $authA);
+$addApi('dialog list: limit 100', 'GET', $list('{friendId}', 'limit=100'), null, $authA);
+$addApi('dialog list: leading zeros', 'GET', $list('{friendId}', 'limit=002'), null, $authA);
+$addApi('dialog list: before the newest', 'GET', $list('{friendId}', 'before={message3}'), null, $authA);
+$addApi('dialog list: before with limit', 'GET', $list('{friendId}', 'limit=1&before={message3}'), null, $authA);
+$addApi('dialog list: before the oldest', 'GET', $list('{friendId}', 'before={message1}'), null, $authA);
+$addApi('dialog list: uppercase before', 'GET', $list('{friendId}', 'before={message3Upper}'), null, $authA);
+$addApi('dialog list: before of the smallest id', 'GET', $list('{friendId}', 'before=00000000-0000-0000-0000-000000000000'), null, $authA);
+$addApi('dialog list: before of the largest id', 'GET', $list('{friendId}', 'before=ffffffff-ffff-ffff-ffff-ffffffffffff'), null, $authA);
+$addApi('dialog list: unknown parameters are ignored', 'GET', $list('{friendId}', 'x=1&offset=1'), null, $authA);
+$addApi('dialog list: duplicate parameter', 'GET', $list('{friendId}', 'limit=1&limit=2'), null, $authA);
+$addApi('dialog list: unknown user', 'GET', $list($unknownUser), null, $authA);
+$addApi('dialog list: yourself', 'GET', $list('{userId}'), null, $authA);
+$addApi('dialog list: invalid userId', 'GET', $list('not-a-uuid'), null, $authA);
+$addApi('dialog list: numeric userId', 'GET', $list('123'), null, $authA);
+$addApi('dialog list: userId with unicode', 'GET', $list('%D0%B8%D0%B4'), null, $authA);
+foreach (['limit=0', 'limit=101', 'limit=-1', 'limit=abc', 'limit=', 'limit=1.5', 'limit=1e1', 'limit=%205', 'limit=%2B5', 'limit[]=1', 'limit=99999999999999999999999'] as $query) {
+    $addApi("dialog list: $query", 'GET', $list('{friendId}', $query), null, $authA);
+}
+foreach (['before=', 'before=abc', 'before=123', 'before[]=x', 'before=%D0%B8%D0%B4', 'before={message1}%0A'] as $query) {
+    $addApi("dialog list: $query", 'GET', $list('{friendId}', $query), null, $authA);
+}
+$addApi('dialog list: invalid userId is reported before invalid limit', 'GET', $list('not-a-uuid', 'limit=0'), null, $authA);
+$addApi('dialog list: yourself is reported before invalid limit', 'GET', $list('{userId}', 'limit=0'), null, $authA);
+$addApi('dialog list: invalid limit is reported before invalid before', 'GET', $list('{friendId}', 'limit=0&before=abc'), null, $authA);
+$addApi('dialog list: non-string limit and before', 'GET', $list('{friendId}', 'limit[]=1&before[]=x'), null, $authA);
+foreach ($unauthorized as $label => $header) {
+    $addApi("dialog list: $label", 'GET', $list('{friendId}'), null, $header);
+}
+$addApi('dialog list: authorization is checked before parameters', 'GET', $list('not-a-uuid', 'limit=0'), null, $garbage);
+$addApi('dialog list: trailing slash', 'GET', '/dialog/{friendId}/list/', null, $authA);
+$addApi('dialog list: extra segment', 'GET', '/dialog/{friendId}/list/extra', null, $authA);
+$addApi('dialog list: no userId', 'GET', '/dialog//list', null, $authA);
+$addApi('dialog list: no userId segment', 'GET', '/dialog/list', null, $authA);
+foreach (['POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("dialog list: $method not allowed", $method, $list('{friendId}'), null, $authA);
+}
+
+// --- диалог: отправка ---
+$send = '/dialog/{friendId}/send';
+$addApi('dialog send: success', 'POST', $send, $postText('Привет, как дела?'), $authA);
+$addApi('dialog send: reply', 'POST', '/dialog/{userId}/send', $postText('Хорошо'), $authB);
+$addApi('dialog send: uppercase userId', 'POST', '/dialog/{friendIdUpper}/send', $postText('Верхний регистр'), $authA);
+$addApi('dialog send: text is trimmed', 'POST', $send, $postText("  \n С пробелами \t "), $authA);
+$addApi('dialog send: line breaks and CRLF', 'POST', $send, $postText("Первая\r\n\nТретья"), $authA);
+$addApi('dialog send: unicode and quotes', 'POST', $send, $postText("Эмодзи 🙂 «ёлочки» \"кавычки\" '; DROP TABLE dialog_messages; --"), $authA);
+$addApi('dialog send: 2000 multibyte characters', 'POST', $send, $postText(str_repeat('я', 2000)), $authA);
+$addApi('dialog send: extra unknown field', 'POST', $send, '{"text":"x","to":"{userId}"}', $authA);
+$addApi('dialog send: text/plain content type', 'POST', $send, $postText('plain'), $authA, ['type' => 'text/plain']);
+$addApi('dialog send: no content type', 'POST', $send, $postText('без типа'), $authA, ['type' => null]);
+$addApi('dialog send: repeated call creates two messages', 'POST', $send, $postText('Дважды'), $authA, ['repeat' => 2]);
+$addApi('dialog send: 2001 characters', 'POST', $send, $postText(str_repeat('я', 2001)), $authA);
+$addApi('dialog send: empty text', 'POST', $send, $postText(''), $authA);
+$addApi('dialog send: blank text', 'POST', $send, $postText("   \n\t "), $authA);
+$addApi('dialog send: missing text', 'POST', $send, '{}', $authA);
+$addApi('dialog send: text number', 'POST', $send, '{"text":123}', $authA);
+$addApi('dialog send: text null', 'POST', $send, '{"text":null}', $authA);
+$addApi('dialog send: text array', 'POST', $send, '{"text":["x"]}', $authA);
+$addApi('dialog send: tab inside', 'POST', $send, $postText("до\tпосле"), $authA);
+$addApi('dialog send: null character inside', 'POST', $send, '{"text":"до\u0000после"}', $authA);
+$addApi('dialog send: invalid UTF-8 in body', 'POST', $send, "{\"text\":\"\xC3\x28\"}", $authA);
+$addApi('dialog send: body is not JSON', 'POST', $send, 'not json', $authA);
+$addApi('dialog send: empty body', 'POST', $send, '', $authA);
+$addApi('dialog send: JSON array body', 'POST', $send, '[]', $authA);
+$addApi('dialog send: JSON null body', 'POST', $send, 'null', $authA);
+$addApi('dialog send: no body at all', 'POST', $send, null, $authA);
+$addApi('dialog send: yourself', 'POST', '/dialog/{userId}/send', $postText('x'), $authA);
+$addApi('dialog send: unknown user', 'POST', "/dialog/$unknownUser/send", $postText('x'), $authA);
+$addApi('dialog send: invalid userId', 'POST', '/dialog/not-a-uuid/send', $postText('x'), $authA);
+$addApi('dialog send: missing text is reported before invalid userId', 'POST', '/dialog/not-a-uuid/send', '{}', $authA);
+$addApi('dialog send: invalid userId is reported before empty text', 'POST', '/dialog/not-a-uuid/send', $postText(''), $authA);
+$addApi('dialog send: empty text is reported before yourself', 'POST', '/dialog/{userId}/send', $postText(''), $authA);
+$addApi('dialog send: empty text is reported before unknown user', 'POST', "/dialog/$unknownUser/send", $postText(''), $authA);
+foreach ($unauthorized as $label => $header) {
+    $addApi("dialog send: $label", 'POST', $send, $postText('x'), $header);
+}
+$addApi('dialog send: authorization is checked before the body', 'POST', $send, 'not json', $garbage);
+$addApi('dialog send: trailing slash', 'POST', "$send/", $postText('x'), $authA);
+$addApi('dialog send: no userId', 'POST', '/dialog//send', $postText('x'), $authA);
+foreach (['GET', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'] as $method) {
+    $addApi("dialog send: $method not allowed", $method, $send, null, $authA);
+}
+
+// --- диалог после отправок: тексты, участники и порядок одинаковы, отклонённые сообщения не сохранены ---
+$addApi('dialog list: after sending', 'GET', $list('{friendId}', 'limit=100'), null, $authA);
+
 // --- Подготовка состояния для кейсов друзей, постов и ленты ---
 // В каждом приложении: пользователь A (зарегистрирован выше) получает токен, регистрируется пользователь B, B создаёт три поста,
 // A создаёт один пост и добавляет B в друзья. Ждём, пока лента A не наполнится.
@@ -627,7 +725,24 @@ foreach ($apps as $name => $baseUrl) {
         exit(2);
     }
 
-    $state[$name] = ['userId' => $users[$name], 'friendId' => $friendId, 'tokenA' => $tokenA, 'tokenB' => $tokenB, 'posts' => $posts, 'ownPost' => $ownPost];
+    // Диалог A и B: три сообщения по очереди, с паузой, чтобы они получили id из разных миллисекунд.
+    foreach ([[$tokenB, $users[$name]], [$tokenA, $friendId], [$tokenB, $users[$name]]] as $index => [$token, $recipient]) {
+        $sent = send($baseUrl, 'POST', "/dialog/$recipient/send", json_encode(['text' => 'Compare message ' . ($index + 1)]), JSON_TYPE, 'Bearer ' . $token);
+        if ($sent['status'] !== 204) {
+            fwrite(STDERR, sprintf("%s: не удалось отправить сообщение (%d): %s\n", $name, $sent['status'], $sent['body']));
+            exit(2);
+        }
+        usleep(10_000);
+    }
+    $dialog = send($baseUrl, 'GET', "/dialog/$friendId/list", null, null, 'Bearer ' . $tokenA);
+    $messageIds = array_column(json_decode($dialog['body'], true) ?? [], 'id');
+    if ($dialog['status'] !== 200 || count($messageIds) !== 3) {
+        fwrite(STDERR, sprintf("%s: не удалось прочитать диалог (%d): %s\n", $name, $dialog['status'], $dialog['body']));
+        exit(2);
+    }
+    $messages = [1 => $messageIds[0], 2 => $messageIds[1], 3 => $messageIds[2]];
+
+    $state[$name] = ['userId' => $users[$name], 'friendId' => $friendId, 'tokenA' => $tokenA, 'tokenB' => $tokenB, 'posts' => $posts, 'ownPost' => $ownPost, 'messages' => $messages];
 }
 foreach (array_keys($apps) as $name) {
     $waitUntil($name, 'лента A содержит три поста', static fn (): bool => count($feedPostIds($name)) === 3);
@@ -643,6 +758,9 @@ $replacements = static function (array $state, ?string $fresh): array {
         '{post1Upper}' => strtoupper($state['posts'][1]),
         '{post2}' => $state['posts'][2],
         '{post3}' => $state['posts'][3],
+        '{message1}' => $state['messages'][1],
+        '{message3}' => $state['messages'][3],
+        '{message3Upper}' => strtoupper($state['messages'][3]),
         '{tokenA}' => $state['tokenA'],
         '{tokenB}' => $state['tokenB'],
     ];
@@ -683,6 +801,9 @@ foreach ($cases as $case) {
             '<post2>' => $current['posts'][2],
             '<post3>' => $current['posts'][3],
             '<ownPost>' => $current['ownPost'],
+            '<message1>' => $current['messages'][1],
+            '<message2>' => $current['messages'][2],
+            '<message3>' => $current['messages'][3],
         ];
         if ($fresh !== null) {
             $knownIds['<fresh>'] = $fresh;
