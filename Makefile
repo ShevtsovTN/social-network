@@ -69,7 +69,7 @@ bench-get-ids: ## Выгрузить случайные id анкет для з�
 bench-read: ## Замер чтения (get и search, k6) для ДЗ «Репликация»: make bench-read PHASE=baseline|replicas [SCENARIOS="get search"] [LEVELS="1 10 100 1000"]
 	PHASE=$(PHASE) ./social-network-docker/bench/read.sh
 
-bench-feed-readers: ## Выгрузить читателей ленты с токенами для нагрузки (feed-readers.csv, нужна заполненная лента): make bench-feed-readers [READERS=20000]
+bench-feed-readers: ## Выгрузить читателей ленты с токенами для нагрузки (feed-readers.csv, нужна заполненная лента): make bench-feed-readers [READERS=100000]
 	./social-network-docker/bench/feed-readers.sh
 
 bench-feed: ## Замер ленты постов (k6): make bench-feed PHASE=имя [MODES="nocache cold warm post"] [LEVELS="1 10 50 100"] [DURATION=30s] (после make bench-up, make seed-feed и make bench-feed-readers)
@@ -88,11 +88,11 @@ bench-plot: ## Графики и таблицы по итогам bench-search �
 	docker build -q -t social-network-bench-plot social-network-docker/bench/plot >/dev/null
 	docker run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/docs/homework-indexes":/report social-network-bench-plot /report
 
-monitoring-up: ## Мониторинг: Prometheus, postgres_exporter, cAdvisor, Grafana (профиль monitoring; Grafana :3000, Prometheus :9090)
-	$(COMPOSE) -f docker-compose.yaml --profile monitoring up -d prometheus grafana cadvisor postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
+monitoring-up: ## Мониторинг: Prometheus, postgres_exporter, redis_exporter, cAdvisor, Grafana (профиль monitoring; Grafana :3000, Prometheus :9090)
+	$(COMPOSE) -f docker-compose.yaml --profile monitoring up -d prometheus grafana cadvisor redis-exporter postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
 
 monitoring-down: ## Остановить и удалить контейнеры мониторинга (данные Prometheus и Grafana в томах остаются)
-	$(COMPOSE) -f docker-compose.yaml --profile monitoring rm -sf prometheus grafana cadvisor postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
+	$(COMPOSE) -f docker-compose.yaml --profile monitoring rm -sf prometheus grafana cadvisor redis-exporter postgres-exporter-primary postgres-exporter-replica-1 postgres-exporter-replica-2
 
 repl-rebuild: ## Пересобрать кластер PostgreSQL с нуля (тома БД удаляются, данные заливаются заново): нужно перед каждым failover
 	./social-network-docker/replication/rebuild.sh

@@ -127,7 +127,7 @@ make reset-db && make up      # удалить данные БД и примен
 make repl-status      # роли узлов, подключённые реплики, лаг
 make repl-sync        # кворумная синхронная репликация ANY 1 (replica1, replica2)
 make repl-async       # вернуть асинхронную (штатный режим)
-make monitoring-up    # Prometheus, postgres_exporter, cAdvisor, Grafana (http://localhost:3000, профиль monitoring)
+make monitoring-up    # Prometheus, postgres_exporter, redis_exporter, cAdvisor, Grafana (http://localhost:3000, профиль monitoring)
 make bench-read PHASE=replicas                 # замер чтения (get и search, k6), см. docs/homework-replication/
 make bench-write PHASE=write [DURATION=30s]    # нагрузка на запись, клиент считает подтверждённые записи
 make repl-failover MODE=async|sync             # kill -9 primary под нагрузкой, promote, подсчёт потерь
@@ -213,7 +213,10 @@ make repl-rebuild                              # кластер PostgreSQL с н
    curl -si -X PUT -H "Authorization: Bearer <tokenA>" http://localhost:8081/friend/delete/<idB>
    ```
 
-6. Посмотреть, что лежит в Redis: `make redis-cli c="KEYS '*'"` (на учебных объёмах), `make redis-cli c="INFO memory"`.
+6. Мониторинг (необязательно): `make monitoring-up`, панель «Лента постов: Redis и воркеры» на
+   <http://localhost:3000/d/feed-redis>: попадания и промахи кэша, память и вытеснения, очередь событий обоих приложений,
+   CPU и память Redis, воркеров и php. Остановить: `make monitoring-down`. Нагрузочные замеры делаются без мониторинга.
+7. Посмотреть, что лежит в Redis: `make redis-cli c="KEYS '*'"` (на учебных объёмах), `make redis-cli c="INFO memory"`.
    Сбросить кэш (холодный старт, например перед замером): `make redis-flush`.
 
 ## Тесты
@@ -393,7 +396,7 @@ make bench-plot                     # графики и таблицы в docs/h
 Для ДЗ «Лента постов» (нужны `make bench-up`, `make seed`, `make seed-feed` и нулевой лаг репликации):
 
 ```
-make bench-feed-readers                     # 20 000 читателей с токенами в social-network-docker/bench/feed-readers.csv (в git не хранится)
+make bench-feed-readers                     # 100 000 читателей с токенами в social-network-docker/bench/feed-readers.csv (в git не хранится)
 make bench-feed PHASE=before-indexes        # nocache, cold, warm и post на обоих приложениях, уровни 1, 10, 50, 100 VU
 make bench-fanout PHASE=before-indexes      # задержка fan-out: малый, средний автор и «знаменитость»
 make explain-feed PHASE=before-indexes      # EXPLAIN (ANALYZE, BUFFERS) запросов ленты в docs/homework-feed/explain/
@@ -407,7 +410,8 @@ make explain-feed PHASE=before-indexes      # EXPLAIN (ANALYZE, BUFFERS) зап�
 Что означают режимы:
 
 - `nocache`: Redis недоступен (заблокирован сменой пароля, остановленный контейнер дал бы лишнюю секунду на разрешение имени), приложение собирает ленту из БД на каждый запрос (чтение с реплики);
-- `cold`: кэш сброшен, каждый запрос от нового читателя: промах, сборка из БД, запись в Redis;
+- `cold`: кэш сброшен, каждый запрос от нового читателя: промах, сборка из БД, запись в Redis (если читателей не хватило и они пошли
+  по второму кругу, замер завершается ошибкой);
 - `warm`: ленты читателей уже в Redis, это попадания в кэш (перед замером кэш заполняется, `redis-stats.csv` даёт hit ratio);
 - `post`: `POST /post/create` и асинхронный fan-out; после нагрузки замеряется, как быстро воркер разбирает очередь.
 

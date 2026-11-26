@@ -217,6 +217,24 @@ services:
       <<: *postgres-exporter-env
       DATA_SOURCE_URI: postgres-replica-2:5432/${POSTGRES_DB}?sslmode=disable
 
+  # Метрики Redis (ДЗ «Лента постов»): память, попадания и промахи, вытеснения, длина стримов событий и отставание
+  # consumer group обоих приложений. Входит основным паролем Redis: отдельного ACL-пользователя на учебном стенде нет.
+  redis-exporter:
+    profiles: [monitoring]
+    image: oliver006/redis_exporter:v1.97.0
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Стримы событий ленты: имя «<REDIS_KEY_PREFIX>:feed-events», префиксы заданы у php-native и php-symfony.
+      REDIS_EXPORTER_CHECK_SINGLE_STREAMS: db0=native:feed-events,db0=symfony:feed-events
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    networks:
+      - backend
+
   cadvisor:
     profiles: [monitoring]
     image: gcr.io/cadvisor/cadvisor:v0.52.1

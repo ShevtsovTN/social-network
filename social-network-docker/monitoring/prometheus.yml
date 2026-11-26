@@ -1,4 +1,4 @@
-# Сбор метрик для ДЗ «Репликация». Профиль compose `monitoring` (make monitoring-up).
+# Сбор метрик для ДЗ «Репликация» и «Лента постов». Профиль compose `monitoring` (make monitoring-up).
 global:
   scrape_interval: 5s
   evaluation_interval: 5s
@@ -20,7 +20,12 @@ scrape_configs:
     static_configs:
       - targets: ['haproxy:8404']
 
-  # CPU и память контейнеров (php, postgres, haproxy).
+  # Redis: кэш ленты и очередь событий fan-out.
+  - job_name: redis
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # CPU и память контейнеров (php, воркеры, postgres, haproxy, redis).
   - job_name: cadvisor
     static_configs:
       - targets: ['cadvisor:8080']

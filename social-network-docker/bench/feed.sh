@@ -229,7 +229,14 @@ measure() {
     node_stats "$run" before
     redis_stats "$run" before "$app"
     # shellcheck disable=SC2086
-    k6 "$script" -e BASE_URL="$base_url" -e VUS="$vus" -e DURATION="$duration" -e SUMMARY="/results/${run}.json" $measure_args
+    summary="$(k6 "$script" -e BASE_URL="$base_url" -e VUS="$vus" -e DURATION="$duration" -e SUMMARY="/results/${run}.json" $measure_args)"
+    echo "$summary"
+    # Читатели cold кончились — часть запросов пришлась на уже заполненные ленты, и замер не холодный. Такой результат не нужен.
+    if [[ "$summary" == *"cold readers exhausted"* ]]; then
+        rm -f "${results}/${run}.json"
+        echo "Замер ${run} недействителен: читатели повторились. Увеличьте READERS (make bench-feed-readers) или сократите DURATION." >&2
+        exit 1
+    fi
     node_stats "$run" after
     redis_stats "$run" after "$app"
 }

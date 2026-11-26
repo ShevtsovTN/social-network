@@ -31,8 +31,11 @@
   на образе и коде приложения: `init: true`, `restart: unless-stopped`, лимиты 1 CPU и 256 МБ у обоих; входят в `make up` и
   `make bench-up`; `make worker-restart`, `make worker-logs`. В dev воркер Symfony работает с `APP_ENV=dev`, как `php-symfony`.
 - `monitoring/`: `prometheus.yml` и провижининг Grafana (datasource, дашборды в `grafana/dashboards/`). Сервисы
-  (Prometheus, postgres_exporter ×3, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
-  в обычный `make up` не входят. Экспортёр ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`).
+  (Prometheus, postgres_exporter ×3, redis_exporter, cAdvisor, Grafana) в compose-профиле `monitoring`: `make monitoring-up`; в замеры и
+  в обычный `make up` не входят. postgres_exporter ходит под ролью `exporter` (`pg_monitor`, `010_monitoring.sh`), redis_exporter
+  основным паролем Redis; стримы событий для него перечислены в compose (`REDIS_EXPORTER_CHECK_SINGLE_STREAMS`, имена
+  `<REDIS_KEY_PREFIX>:feed-events`: при смене префиксов поправить). Панель ленты: `grafana/dashboards/feed-redis.json`.
+  Пока `make bench-feed` держит фазу nocache (пароль Redis сменён), экспортёр не может войти, и метрики Redis пропадают.
 - `compare/`: `compare.php` (`make compare`, сверка HTTP-ответов native и symfony, включая друзей, посты и ленту) и `infrastructure.sh`
   (`make compare-infrastructure`, сверка Infrastructure ленты в двух копиях после нормализации namespace).
 - `docker-compose.yaml`, `docker-compose.override.yaml` и `.env` лежат в корне репозитория, не здесь.

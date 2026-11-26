@@ -53,7 +53,7 @@
   для `GET /user/search` (ДЗ «Производительность индексов», `db/migrations/002_…`, отчёт в `docs/homework-indexes/`),
   а также `friendships (friend_id, user_id)` и `posts (author_id, created_at DESC, id DESC)` для ленты (`004`, `005`, замер в `docs/homework-feed/`).
 - Монолит: никаких отдельных сервисов, очередей, брокеров. Инфраструктура БД и наблюдаемости (реплики PostgreSQL,
-  HAProxy, Prometheus, postgres_exporter, cAdvisor, Grafana) сервисами приложения не считается; приложений остаётся два.
+  HAProxy, Prometheus, postgres_exporter, redis_exporter, cAdvisor, Grafana) сервисами приложения не считается; приложений остаётся два.
   Redis (кэш ленты и Redis Streams) тоже инфраструктура, а не сервис приложения; воркер fan-out — тот же код
   приложения, запущенный отдельным процессом, а не отдельный сервис.
 
@@ -73,7 +73,7 @@
   ресурсов, `php.ini`, `php-fpm.conf`, без bind mount.
 - Все узлы PostgreSQL (primary и standby) получают одинаковые лимиты CPU и памяти и один `postgresql.conf`.
   Замеры до и после репликации сравнимы только на одинаковых лимитах.
-- Мониторинг (Prometheus, postgres_exporter, cAdvisor, Grafana) живёт в compose-профиле `monitoring`
+- Мониторинг (Prometheus, postgres_exporter, redis_exporter, cAdvisor, Grafana) живёт в compose-профиле `monitoring`
   (`make monitoring-up`) и по умолчанию не запускается. Если замер сделан с профилем, это указывается в отчёте.
 - Изменение топологии БД: сначала `social-network-docker/postgres` и compose, затем роутинг в обоих приложениях.
   Роутинг чтения и записи в обоих приложениях эквивалентен по подходу.
